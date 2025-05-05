@@ -266,8 +266,8 @@ if __name__ == "__main__":
 
     for argv in sys.argv[1:]:
 
-        if argv[:6] == "model=" : select_model = argv[6:].lower()
-        if argv[:6] == "train=" : select_train = argv[6:].lower()
+        if argv[:6] == "model=" : select_model = argv[6:]
+        if argv[:6] == "train=" : select_train = argv[6:]
 
     # Define model
     if select_model is None:
