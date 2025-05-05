@@ -28,8 +28,12 @@ for (name, file), color in zip(all_loss.items(), colors):
 
 	train, valid = np.load(file)
 
+	xmin = np.argmin(valid)
+	ymin = np.min(valid)
+
 	plt.plot(train, color=color, linestyle=':')
-	plt.plot(valid, color=color, linestyle='-', label=name)
+	plt.plot(valid, color=color, linestyle='-', label=f"{name} : best at epoch {xmin} = {ymin:.2f}")
+	plt.scatter(xmin, ymin, facecolor=color, edgecolor='k', marker='d')
 
 plt.legend()
 plt.title(f"Evolution of loss for each models")
