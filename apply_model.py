@@ -53,7 +53,7 @@ if __name__ == "__main__":
 	elif model_name in ["JEC_Unet", "jec_unet", "JEC_UNET"]:
 
 		from Spec2vecModels.JEC_Unet.model import UNet as model
-		from Spec2vecModels.JEC_Unet.train_model import CustumDataset as model_dataset
+		from Spec2vecModels.JEC_Unet.model import CustumDataset as model_dataset
 		model_name = "JEC_Unet"
 
 	else:
