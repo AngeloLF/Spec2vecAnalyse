@@ -50,7 +50,7 @@ if __name__ == "__main__":
 		from Spec2vecModels.SCaM.model import SCaM_Dataset as model_dataset
 		model_name = "SCaM"
 
-	elif model_name == ["JEC_Unet", "jec_unet", "JEC_UNET"]:
+	elif model_name in ["JEC_Unet", "jec_unet", "JEC_UNET"]:
 
 		from Spec2vecModels.JEC_unet.model import UNet as model
 		from Spec2vecModels.JEC_unet.train_model import CustumDataset as model_dataset
