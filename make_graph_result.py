@@ -159,8 +159,8 @@ def open_fold(fold, pred_folder, path4save, train_params, select_model, select_t
     res = {"classic" : np.zeros((n_target, n_var)),
            "norma" : np.zeros((n_target, n_var))}
 
-    maxScore = {"classic":[0.0, None], "norma":[0.0, None]}
-    minScore = {"classic":[1.0, None], "norma":[1.0, None]}
+    maxScore = {"classic":[-np.inf, None, None, None], "norma":[-np.inf, None, None, None]}
+    minScore = {"classic":[+np.inf, None, None, None], "norma":[+np.inf, None, None, None]}
     # loading of each spectrum
     for file in files:
 
@@ -263,11 +263,13 @@ if __name__ == "__main__":
 
     select_model = None
     select_train = None
+    select_test = None
 
     for argv in sys.argv[1:]:
 
         if argv[:6] == "model=" : select_model = argv[6:]
         if argv[:6] == "train=" : select_train = argv[6:]
+        if argv[:5] == "test=" : select_test = argv[5:]
 
     # Define model
     if select_model is None:
@@ -279,15 +281,21 @@ if __name__ == "__main__":
         print(f"{c.r}WARNING : train folder is not define (train=<select_train>){c.d}")
         raise ValueError("Train folder error")
 
-    path_test = './results'
-    folders_test = ["output_test", "test128"]
+    # Define test folder
+    if select_train is None:
+        print(f"{c.r}WARNING : test folder is not define (test=<select_test>){c.d}")
+        raise ValueError("Test folder error")
+
+    # Define path test
+    if "output" in select_test : path_test = "./results"
+    else : path_test = "./results/output_simu"
 
     path_train = './results/output_simu'
-    name_of_spectrum_folders = "spectrum"
 
     path_save = "./results/analyse"
     pred_folder = f"pred_{select_model}_{select_train}"
 
+    if "analyse" not in os.listdir(f"./results") : os.mkdir("./results/analyse")
     if pred_folder in os.listdir(path_save) : shutil.rmtree(f"{path_save}/{pred_folder}")
     os.mkdir(f"{path_save}/{pred_folder}")
 
@@ -298,112 +306,105 @@ if __name__ == "__main__":
 
 
     # For each folder test (like output construct with lsp)
+    test_folder = select_test
 
-    for i, test_folder in enumerate(folders_test):
-
-
-
-        print(f"\n{c.g}Folder Test : {test_folder} [{i+1}/{len(folders_test)}]{c.d}")
-
-        path4save = f"{path_save}/{pred_folder}/{test_folder}"
-        if test_folder in os.listdir(f"{path_save}/{pred_folder}") : shutil.rmtree(f"{path_save}/{pred_folder}/{test_folder}")
-        os.mkdir(f"{path_save}/{pred_folder}/{test_folder}")
-        os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/metric")
-        os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/example_spectrum")
-        os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/example_image")
+    path4save = f"{path_save}/{pred_folder}/{test_folder}"
+    if test_folder in os.listdir(f"{path_save}/{pred_folder}") : shutil.rmtree(f"{path_save}/{pred_folder}/{test_folder}")
+    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}")
+    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/metric")
+    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/example_spectrum")
+    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/example_image")
 
 
+    if test_folder == "output_test":
+
+        sub_folds = [f"{path_test}/{test_folder}/{sf}" for sf in os.listdir(f"{path_test}/{test_folder}") if "test" in sf]
+        nsub = len(sub_folds)
+
+        all_res = {"classic":None, "norma":None}
+
+        for j, sub_fold in enumerate(sub_folds):
+
+            print(f"{c.lg}Make {sub_fold} [{j+1}/{nsub}] ...{c.d}")
+            new_res, targets_labels = open_fold(fold=sub_fold, pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
+                select_model=select_model, select_train=select_train, path_train=path_train)
+
+            if j == 0: 
+                all_res = new_res
+            else:
+                for mode in all_res.keys():
+                    all_res[mode] = new_res[mode] if all_res[mode] is None else np.hstack((all_res[mode], new_res[mode]))
 
 
+        # Score for each targets
+        plt.figure(figsize=(16, 8))
+        x_positions = np.arange(len(targets_labels))
+        for mode, col, dx in [("classic", "g", -0.15), ("norma", "r", 0.15)]:
+            targets_mean = np.mean(all_res[mode], axis=1)
+            targets_std = np.std(all_res[mode], axis=1)
 
-        if test_folder == "output_test":
+            targets_min = np.min(all_res[mode], axis=1)
+            targets_max = np.max(all_res[mode], axis=1)
 
-            sub_folds = [f"{path_test}/{test_folder}/{sf}" for sf in os.listdir(f"{path_test}/{test_folder}") if "test" in sf]
-            nsub = len(sub_folds)
-
-            all_res = {"classic":None, "norma":None}
-
-            for j, sub_fold in enumerate(sub_folds):
-
-                print(f"{c.lg}Make {sub_fold} [{j+1}/{nsub}] ...{c.d}")
-                new_res, targets_labels = open_fold(fold=sub_fold, pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
-                    select_model=select_model, select_train=select_train, path_train=path_train)
-
-                if j == 0: 
-                    all_res = new_res
-                else:
-                    for mode in all_res.keys():
-                        all_res[mode] = new_res[mode] if all_res[mode] is None else np.hstack((all_res[mode], new_res[mode]))
+            ymin = (targets_mean + targets_std) - targets_min
+            ymax = targets_max - (targets_mean + targets_std)
+            ymax[ymax < 0] = 0.0
+            
+            plt.bar(x_positions+dx, 2*targets_std, bottom=targets_mean-targets_std, yerr=[ymin, ymax], capsize=5, alpha=0.7, color=col, width=0.3)
+            plt.errorbar(x_positions+dx, targets_mean, color='k', linestyle='', marker='.')
 
 
-            # Score for each targets
-            plt.figure(figsize=(16, 8))
-            x_positions = np.arange(len(targets_labels))
-            for mode, col, dx in [("classic", "g", -0.15), ("norma", "r", 0.15)]:
-                targets_mean = np.mean(all_res[mode], axis=1)
-                targets_std = np.std(all_res[mode], axis=1)
+        plt.xlabel("Targets")
+        plt.ylabel("Scores")
+        plt.title(f"Score for each traget in {test_folder}")
+        plt.xticks(x_positions, targets_labels, rotation=90)
+        plt.grid(axis='y', linestyle='--')
+        plt.ylim(0, 1)
+        plt.tight_layout()
+        plt.savefig(f"{path4save}/for_target.png")
+        plt.close()
+        # plt.show()
 
-                targets_min = np.min(all_res[mode], axis=1)
-                targets_max = np.max(all_res[mode], axis=1)
+        with open(f"{path4save}/resume.txt", "w") as f:
 
-                ymin = (targets_mean + targets_std) - targets_min
-                ymax = targets_max - (targets_mean + targets_std)
-                ymax[ymax < 0] = 0.0
-                
-                plt.bar(x_positions+dx, 2*targets_std, bottom=targets_mean-targets_std, yerr=[ymin, ymax], capsize=5, alpha=0.7, color=col, width=0.3)
-                plt.errorbar(x_positions+dx, targets_mean, color='k', linestyle='', marker='.')
+            for mode in ["classic", "norma"]:
 
-
-            plt.xlabel("Targets")
-            plt.ylabel("Scores")
-            plt.title(f"Score for each traget in {test_folder}")
-            plt.xticks(x_positions, targets_labels, rotation=90)
-            plt.grid(axis='y', linestyle='--')
-            plt.ylim(0, 1)
-            plt.tight_layout()
-            plt.savefig(f"{path4save}/for_target.png")
-            plt.close()
-            # plt.show()
-
-            with open(f"{path4save}/resume.txt", "w") as f:
-
-                for mode in ["classic", "norma"]:
-
-                    f.write(f"For the `{mode}` calcul : {np.mean(all_res[mode])*100:.2f} ~ {np.std(all_res[mode])*100:.2f} %\n")
+                f.write(f"For the `{mode}` calcul : {np.mean(all_res[mode])*100:.2f} ~ {np.std(all_res[mode])*100:.2f} %\n")
 
 
 
 
 
-        else:
+    else:
 
 
-            res, var = open_fold_classico(fold=f"{path_train}/{test_folder}", pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
-                    select_model=select_model, select_train=select_train, path_train=path_train)
+        res, var = open_fold_classico(fold=f"{path_train}/{test_folder}", pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
+                select_model=select_model, select_train=select_train, path_train=path_train)
 
 
 
 
-            for key, val in var.items():
+        for key, val in var.items():
 
-                if key != "TARGET":
+            if key != "TARGET":
 
-                    plt.scatter(res["classic"], val, c="g", label="Classic")
-                    plt.scatter(res["norma"], val, c="r", label="Norma")
+                plt.scatter(val, res["classic"]*100, c="g", label="Classic")
+                plt.scatter(val, res["norma"]*100, c="r", label="Norma")
 
-                    plt.xlabel(f"Variable {key}")
-                    plt.ylabel(f"Score (%)")
-                    plt.savefig(f"{path4save}/metric/{key}.png")
-                    plt.close()
+                plt.legend()
+                plt.xlabel(f"Variable {key}")
+                plt.ylabel(f"Score (%)")
+                plt.savefig(f"{path4save}/metric/{key}.png")
+                plt.close()
 
-                else:
+            else:
 
-                    pass
+                pass
 
 
-            with open(f"{path4save}/resume.txt", "w") as f:
+        with open(f"{path4save}/resume.txt", "w") as f:
 
-                for mode in ["classic", "norma"]:
+            for mode in ["classic", "norma"]:
 
-                    f.write(f"For the `{mode}` calcul : {np.mean(res[mode])*100:.2f} ~ {np.std(res[mode])*100:.2f} %\n")
+                f.write(f"For the `{mode}` calcul : {np.mean(res[mode])*100:.2f} ~ {np.std(res[mode])*100:.2f} %\n")
 

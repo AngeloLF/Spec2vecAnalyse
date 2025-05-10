@@ -3,7 +3,10 @@ import matplotlib.pyplot as plt
 import os
 
 
-path_s2v_results = f"./results/Spec2vecModels_Results"
+path_root = "./results"
+path_savefig = "analyse"
+if path_savefig not in os.listdir(path_root) : os.mkdir(f"{path_root}/{path_savefig}")
+path_s2v_results = f"{path_root}/Spec2vecModels_Results"
 folder_loss = "loss"
 
 colors = ['g', 'r', 'b', 'k', 'm', 'y']
@@ -40,4 +43,4 @@ plt.title(f"Evolution of loss for each models")
 plt.xlabel(f"Epoch")
 plt.ylabel(f"Loss")
 plt.yscale(f"log")
-plt.savefig(f"./results/analyse/loss_history.png")
+plt.savefig(f"./{path_root}/{path_savefig}/loss_history.png")
