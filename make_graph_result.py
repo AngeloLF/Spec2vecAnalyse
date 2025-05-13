@@ -388,8 +388,8 @@ if __name__ == "__main__":
 
             if key != "TARGET":
 
-                plt.scatter(val, res["classic"]*100, c="g", label="Classic")
-                plt.scatter(val, res["norma"]*100, c="r", label="Norma")
+                plt.scatter(val, res["classic"]*100, c="g", label="Classic", alpha=0.6)
+                plt.scatter(val, res["norma"]*100, c="r", label="Norma", alpha=0.6)
 
                 plt.legend()
                 plt.xlabel(f"Variable {key}")
@@ -399,7 +399,49 @@ if __name__ == "__main__":
 
             else:
 
-                pass
+                targets_labels = list(set(val))
+                ntarget = len(targets_labels)
+
+                targets_mean = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+                targets_std = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+                targets_min = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+                targets_max = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+
+                for i, target in enumerate(targets_labels):
+
+                    for mode in ["norma", "classic"]:
+
+                        y = res[mode][val == target]
+                        targets_mean[mode][i] = np.mean(y)
+                        targets_std[mode][i] = np.std(y)
+                        targets_min[mode][i] = np.min(y)
+                        targets_max[mode][i] = np.max(y)
+
+                # Score for each targets
+                plt.figure(figsize=(16, 8))
+                x_positions = np.arange(len(targets_labels))
+                for mode, col, dx in [("classic", "g", -0.15), ("norma", "r", 0.15)]:
+
+                    ymin = (targets_mean[mode] + targets_std[mode]) - targets_min[mode]
+                    ymax = targets_max[mode] - (targets_mean[mode] + targets_std[mode])
+                    ymax[ymax < 0] = 0.0
+                    
+                    plt.bar(x_positions+dx, 2*targets_std[mode], bottom=targets_mean[mode]-targets_std[mode], yerr=[ymin, ymax], capsize=5, alpha=0.7, color=col, width=0.3)
+                    plt.errorbar(x_positions+dx, targets_mean[mode], color='k', linestyle='', marker='.')
+
+
+                plt.xlabel("Targets")
+                plt.ylabel("Scores")
+                plt.title(f"Score for each traget in {test_folder}")
+                plt.xticks(x_positions, targets_labels, rotation=90)
+                plt.grid(axis='y', linestyle='--')
+                plt.ylim(0, 1)
+                plt.tight_layout()
+                plt.savefig(f"{path4save}/for_target.png")
+                plt.close()
+
+
+
 
 
         with open(f"{path4save}/resume.txt", "w") as f:
