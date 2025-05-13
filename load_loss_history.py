@@ -24,7 +24,7 @@ for model in os.listdir(path_s2v_results):
 
 		all_loss[name] = file
 
-
+print(f"ALL loss : {all_loss}")
 plt.figure(figsize=(16, 8))
 
 for (name, file), color in zip(all_loss.items(), colors):
