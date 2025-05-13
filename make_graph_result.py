@@ -94,8 +94,8 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
     res = {"classic" : np.zeros(params["nb_simu"]),
            "norma" : np.zeros(params["nb_simu"])}
 
-    maxScore = {"classic":[0.0, None], "norma":[0.0, None]}
-    minScore = {"classic":[1.0, None], "norma":[1.0, None]}
+    maxScore = {"classic":[-np.inf, None, None, None], "norma":[-np.inf, None, None, None]}
+    minScore = {"classic":[+np.inf, None, None, None], "norma":[+np.inf, None, None, None]}
     # loading of each spectrum
     for i, file in enumerate(files):
 
@@ -296,7 +296,7 @@ if __name__ == "__main__":
     pred_folder = f"pred_{select_model}_{select_train}"
 
     if "analyse" not in os.listdir(f"./results") : os.mkdir("./results/analyse")
-    if pred_folder not in os.listdir(path_save) : os.mkdir(f"{path_save}/{pred_folder}") # shutil.rmtree(f"{path_save}/{pred_folder}")
+    os.makedirs(f"{path_save}/{pred_folder}", exist_ok=True) # shutil.rmtree(f"{path_save}/{pred_folder}")
     
 
     # chargement des params du train 
