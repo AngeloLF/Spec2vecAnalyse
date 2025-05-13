@@ -9,7 +9,7 @@ if path_savefig not in os.listdir(path_root) : os.mkdir(f"{path_root}/{path_save
 path_s2v_results = f"{path_root}/Spec2vecModels_Results"
 folder_loss = "loss"
 
-colors = ['g', 'r', 'b', 'k', 'm', 'y']
+colors = ['g', 'r', 'b', 'k', 'm', 'y', 'darkred', 'darkgreen']
 
 all_loss = dict()
 
