@@ -296,8 +296,8 @@ if __name__ == "__main__":
     pred_folder = f"pred_{select_model}_{select_train}"
 
     if "analyse" not in os.listdir(f"./results") : os.mkdir("./results/analyse")
-    if pred_folder in os.listdir(path_save) : shutil.rmtree(f"{path_save}/{pred_folder}")
-    os.mkdir(f"{path_save}/{pred_folder}")
+    if pred_folder not in os.listdir(path_save) : os.mkdir(f"{path_save}/{pred_folder}") # shutil.rmtree(f"{path_save}/{pred_folder}")
+    
 
     # chargement des params du train 
     with open(f"{path_train}/{select_train}/hist_params.json", 'r') as f:
