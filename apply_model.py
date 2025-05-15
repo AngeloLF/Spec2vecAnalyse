@@ -59,6 +59,30 @@ if __name__ == "__main__":
         from Spec2vecModels.SCaM.model import SCaM_Dataset as model_dataset
         model_name = "SCaM"
 
+    elif model_name.lower() == "scam_l1":
+
+        from Spec2vecModels.SCaM_L1.model import SCaM_Model as model
+        from Spec2vecModels.SCaM_L1.model import SCaM_Dataset as model_dataset
+        model_name = "SCaM_L1"
+
+    elif model_name.lower() == "scam_hl1":
+
+        from Spec2vecModels.SCaM_HL1.model import SCaM_Model as model
+        from Spec2vecModels.SCaM_HL1.model import SCaM_Dataset as model_dataset
+        model_name = "SCaM_HL1"
+
+    elif model_name.lower() == "scam_hl3":
+
+        from Spec2vecModels.SCaM_HL3.model import SCaM_Model as model
+        from Spec2vecModels.SCaM_HL3.model import SCaM_Dataset as model_dataset
+        model_name = "SCaM_HL3"
+
+    elif model_name.lower() == "scam_msle":
+
+        from Spec2vecModels.SCaM_MSLE.model import SCaM_Model as model
+        from Spec2vecModels.SCaM_MSLE.model import SCaM_Dataset as model_dataset
+        model_name = "SCaM_MSLE"
+
     elif model_name.lower() == "jec_unet":
 
         from Spec2vecModels.JEC_Unet.model import UNet as model
