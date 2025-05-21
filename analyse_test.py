@@ -9,7 +9,7 @@ from time import time
 
 
 
-def compute_score(true, pred, give_norm_array=False):
+def compute_score_L1(true, pred, give_norm_array=False):
 
     t = np.copy(true)
     p = np.copy(pred)
@@ -32,9 +32,30 @@ def compute_score(true, pred, give_norm_array=False):
     if give_norm_array : return tn, pn, score, score_norma
     else : return score, score_norma
 
+def compute_score_chi2(true, pred, Csigma_chi2=12, norma=800, give_norm_array=False):
+
+    t = np.copy(true)
+    p = np.copy(pred)
+
+    p[p < 0] = 0
+    t[t < 0] = 0
+
+    # non norma
+    chi2 = np.sum((true - pred)**2 / (true + Csigma_chi2**2)) / norma
+
+    # norma
+    norma = np.sum((true - pred)**2 / (true + 1.**2)) / norma
+
+    if give_norm_array : return true, pred, chi2, norma
+    else : return chi2, norma
+
+def compute_score(name, true, pred, give_norm_array=False):
+
+    if name == "L1"   : return compute_score_L1(true, pred, give_norm_array=give_norm_array)
+    if name == "chi2" : return compute_score_chi2(true, pred, give_norm_array=give_norm_array)
 
 
-def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, varp, path4save, give_norma, give_image, savename):
+def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, varp, path4save, give_norma, give_image, savename, score_type):
 
     with open(f"{fold}/hparams.json", 'r') as f:
         hparams = json.load(f)
@@ -42,13 +63,13 @@ def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, 
     x = np.arange(hparams["LAMBDA_MIN"], hparams["LAMBDA_MAX"], hparams["LAMBDA_STEP"])
     n = int(num_spec)
 
-    pred = np.load(f"{fold}/pred_{select_model}_{select_train}/spectrum_{num_spec}.npy")
+    pred = np.load(f"{fold}/pred_{select_model}_{select_train}_{select_lr}/spectrum_{num_spec}.npy")
     true = np.load(f"{fold}/spectrum/spectrum_{num_spec}.npy")
     image = np.load(f"{fold}/image/image_{num_spec}.npy")
 
     flux = np.sum(true) * 140 # flux in adu ~
 
-    tn, pn, s, sn = compute_score(true, pred, give_norm_array=True)
+    tn, pn, s, sn = compute_score(score_type, true, pred, give_norm_array=True)
     if give_norma : true, pred = tn, pn
 
     plt.figure(figsize=(16, 8))
@@ -57,7 +78,7 @@ def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, 
     plt.plot(x, true, c='g', label='True')
     plt.plot(x, pred, c='r', label='Pred')
 
-    plt.title(f"For {select_model} train with {select_train} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {flux/1000:.0f} kADU")
+    plt.title(f"For {select_model} train with {select_train}_{select_lr} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {flux/1000:.0f} kADU")
     plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
     for key, val in varp.items():
         if key != "TARGET" : plt.scatter([], [], marker='*', label=f"{key} = {val[n]:.2f}", color='k')
@@ -77,7 +98,7 @@ def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, 
 
 
 def makeOneSpec(fold, select_model, path_train, select_train, res, varp, n, 
-                path4save, give_norma, give_image, savename):
+                path4save, give_norma, give_image, savename, score_type):
 
     with open(f"{fold}/hparams.json", 'r') as f:
         hparams = json.load(f)
@@ -85,11 +106,11 @@ def makeOneSpec(fold, select_model, path_train, select_train, res, varp, n,
     x = np.arange(hparams["LAMBDA_MIN"], hparams["LAMBDA_MAX"], hparams["LAMBDA_STEP"])
     num_spec = res["num"][n]
 
-    pred = np.load(f"{fold}/pred_{select_model}_{select_train}/spectrum_{num_spec}.npy")
+    pred = np.load(f"{fold}/pred_{select_model}_{select_train}_{select_lr}/spectrum_{num_spec}.npy")
     true = np.load(f"{fold}/spectrum/spectrum_{num_spec}.npy")
     image = np.load(f"{fold}/image/image_{num_spec}.npy")
 
-    tn, pn, s, sn = compute_score(true, pred, give_norm_array=True)
+    tn, pn, s, sn = compute_score(score_type, true, pred, give_norm_array=True)
     if give_norma : true, pred = tn, pn
 
     plt.figure(figsize=(16, 8))
@@ -98,7 +119,7 @@ def makeOneSpec(fold, select_model, path_train, select_train, res, varp, n,
     plt.plot(x, true, c='g', label='True')
     plt.plot(x, pred, c='r', label='Pred')
 
-    plt.title(f"For {select_model} train with {select_train} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/1000:.0f} kADU")
+    plt.title(f"For {select_model} train with {select_train}_{select_lr} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/1000:.0f} kADU")
     plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
     for key, val in varp.items():
         if key != "TARGET" : plt.scatter([], [], marker='*', label=f"{key} = {val[n]:.2f}", color='k')
@@ -120,7 +141,7 @@ def makeOneSpec(fold, select_model, path_train, select_train, res, varp, n,
 
 
 
-def open_fold_classico(fold, pred_folder, path4save, train_params, select_model, select_train, path_train, cmap="Reds", vmax=0.2, nb_level=10):
+def open_fold_classico(fold, pred_folder, path4save, train_params, select_model, select_train, path_train, score_type, cmap="Reds", vmax=0.2, nb_level=10):
 
     """
     dict res : 
@@ -154,7 +175,7 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
 
         res["flux"][i] = np.sum(true) * 140 # flux in adu ~
 
-        score, score_norma = compute_score(true, pred)
+        score, score_norma = compute_score(score_type, true, pred)
         res["classic"][i] = score
         res["norma"][i] = score_norma
         res["file"][i] = file
@@ -179,8 +200,8 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
         for i, level in enumerate(np.linspace(np.min(res[mode]), np.max(res[mode]), nb_level)):
 
             near = np.argmin(np.abs(res[mode]-level))
-            makeOneSpec(fold, select_model, path_train, select_train, res, var_params, near, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}")
-            makeOneSpec(fold, select_model, path_train, select_train, res, var_params, near, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}")
+            makeOneSpec(fold, select_model, path_train, select_train, res, var_params, near, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}", score_type=select_score_type)
+            makeOneSpec(fold, select_model, path_train, select_train, res, var_params, near, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}", score_type=select_score_type)
 
 
 
@@ -192,7 +213,7 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
 
 
 
-def open_fold(fold, pred_folder, path4save, train_params, select_model, select_train, path_train, cmap="Reds", vmax=0.2):
+def open_fold(fold, pred_folder, path4save, train_params, select_model, select_train, path_train, score_type, cmap="Reds", vmax=0.2):
 
     """
     dict res : 
@@ -237,7 +258,7 @@ def open_fold(fold, pred_folder, path4save, train_params, select_model, select_t
         pred = np.load(f"{fold}/{pred_folder}/{file}")
         true = np.load(f"{fold}/spectrum/{file}")
 
-        score, score_norma = compute_score(true, pred)
+        score, score_norma = compute_score(score_type, true, pred)
         res["classic"][num_target, num_var] = score
         res["norma"][num_target, num_var] = score_norma
 
@@ -294,10 +315,10 @@ def open_fold(fold, pred_folder, path4save, train_params, select_model, select_t
 
     for mode in ["classic", "norma"]:
         isNorma = True if mode == "norma" else False
-        makeOneSpecOldStyle(fold, select_model, path_train, select_train, maxScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"max_{var_name}_{mode}")
-        makeOneSpecOldStyle(fold, select_model, path_train, select_train, maxScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"max_{var_name}_{mode}")
-        makeOneSpecOldStyle(fold, select_model, path_train, select_train, minScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"min_{var_name}_{mode}")
-        makeOneSpecOldStyle(fold, select_model, path_train, select_train, minScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"min_{var_name}_{mode}")
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, maxScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"max_{var_name}_{mode}", score_type=select_score_type)
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, maxScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"max_{var_name}_{mode}", score_type=select_score_type)
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, minScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"min_{var_name}_{mode}", score_type=select_score_type)
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, minScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"min_{var_name}_{mode}", score_type=select_score_type)
 
 
     return res, params["target_set"]
@@ -330,12 +351,16 @@ if __name__ == "__main__":
     select_model = None
     select_train = None
     select_test = None
+    select_lr = None
+    select_score_type = None
 
     for argv in sys.argv[1:]:
 
         if argv[:6] == "model=" : select_model = argv[6:]
         if argv[:6] == "train=" : select_train = argv[6:]
         if argv[:5] == "test=" : select_test = argv[5:]
+        if argv[:3] == "lr=" : select_lr = f"{float(argv[3:]):.0e}"
+        if argv[:6] == "score=" : select_score_type = argv[6:]
 
     # Define model
     if select_model is None:
@@ -348,9 +373,19 @@ if __name__ == "__main__":
         raise ValueError("Train folder error")
 
     # Define test folder
-    if select_train is None:
+    if select_test is None:
         print(f"{c.r}WARNING : test folder is not define (test=<select_test>){c.d}")
         raise ValueError("Test folder error")
+
+    # Define test folder
+    if select_lr is None:
+        print(f"{c.r}WARNING : lr is not define (lr=<lr>){c.d}")
+        raise ValueError("Lr error")
+
+    # Define test folder
+    if select_score_type is None:
+        print(f"{c.r}WARNING : Score type is not define (score=<score_type>){c.d}")
+        raise ValueError("Score type error")
 
     # Define path test
     if "output" in select_test : path_test = "./results"
@@ -358,11 +393,12 @@ if __name__ == "__main__":
 
     path_train = './results/output_simu'
 
-    path_save = "./results/analyse"
-    pred_folder = f"pred_{select_model}_{select_train}"
+    path_save = f"./results/analyse/{select_score_type}"
+    pred_folder = f"pred_{select_model}_{select_train}_{select_lr}"
 
-    if "analyse" not in os.listdir(f"./results") : os.mkdir("./results/analyse")
-    os.makedirs(f"{path_save}/{pred_folder}", exist_ok=True) # shutil.rmtree(f"{path_save}/{pred_folder}")
+    os.makedirs(f"./results/analyse", exist_ok=True)
+    os.makedirs(f"./results/analyse/{select_score_type}", exist_ok=True)
+    os.makedirs(f"{path_save}/{pred_folder}", exist_ok=True) 
     
 
     # chargement des params du train 
@@ -393,7 +429,7 @@ if __name__ == "__main__":
 
             print(f"{c.lg}Make {sub_fold} [{j+1}/{nsub}] ...{c.d}")
             new_res, targets_labels = open_fold(fold=sub_fold, pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
-                select_model=select_model, select_train=select_train, path_train=path_train)
+                select_model=select_model, select_train=select_train, path_train=path_train, score_type=select_score_type)
 
             if j == 0: 
                 all_res = new_res
@@ -446,7 +482,7 @@ if __name__ == "__main__":
 
         t0 = time()
         res, var = open_fold_classico(fold=f"{path_train}/{test_folder}", pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
-                select_model=select_model, select_train=select_train, path_train=path_train)
+                select_model=select_model, select_train=select_train, path_train=path_train, score_type=select_score_type)
         print(time()-t0)
 
 
@@ -502,7 +538,7 @@ if __name__ == "__main__":
                 plt.title(f"Score for each traget in {test_folder}")
                 plt.xticks(x_positions, targets_labels, rotation=90)
                 plt.grid(axis='y', linestyle='--')
-                plt.ylim(0, 1)
+                plt.ylim(0)
                 plt.tight_layout()
                 plt.savefig(f"{path4save}/for_target.png")
                 plt.close()
