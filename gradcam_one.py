@@ -50,7 +50,7 @@ if __name__ == "__main__":
 
     # Load model
     model = SCaM_Model()
-    model.load_state_dict(torch.load(path_model_state)['model_state_dict'])
+    model.load_state_dict(torch.load(path_model_state, map_location=device)['model_state_dict'])
     model.eval()
     model.to(device)
 
