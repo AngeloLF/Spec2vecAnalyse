@@ -43,6 +43,8 @@ if __name__ == "__main__":
     # path
     path_model_state = f"./results/Spec2vecModels_Results/{model}/states/{train}_{lr}_best.pth"
     path_image = f"./results/output_simu/{test}/image/image_{image}.npy"
+    path_save = f"./results/analyse/gradcam"
+    os.makedirs(path_save, exist_ok=True)
     filename = f"{model}_{train}_{lr} - {test}_image_{image}"
 
 
@@ -100,10 +102,11 @@ if __name__ == "__main__":
     forward_handle.remove()
     backward_handle.remove()
 
-    plt.figure(figsize=(12, 4))
+    plt.figure(figsize=(16, 8))
     plt.imshow(np.log10(image_brut+1), cmap='gray')
     plt.imshow(cam, cmap='jet', alpha=0.5)
-    plt.title("Grad-CAM - neurone 413")
+    plt.title(f"Grad-CAM for {filename} on neuron n°{n}")
     plt.colorbar()
     plt.axis('off')
-    plt.show()
+    plt.savefig(f"{path_save}/{filename}.png")
+    plt.close()
