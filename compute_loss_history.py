@@ -17,7 +17,7 @@ folders_loss = ["loss", "loss_mse", "loss_chi2"]
 if folders_loss[0] not in os.listdir(path_losses) : os.mkdir(f"{path_losses}/{folders_loss[0]}")
 
 path_of_npy = f"{path_root}/Spec2vecModels_Results"
-colors = ['g', 'r', 'b', 'k', 'm', 'y', 'darkred', 'darkgreen']
+colors = ['g', 'r', 'b', 'k', 'm', 'y', 'c', 'darkgreen', 'darkred', 'darkblue', 'gray', 'darkmagenta', 'orange', 'darkcyan']
 all_loss = dict()
 
 
@@ -51,7 +51,7 @@ for fold in folders_loss:
 			plt.scatter(xmin, ymin, facecolor=color, edgecolor='k', marker='d')
 
 		plt.legend()
-		plt.title(f"Evolution of {name} for each models")
+		plt.title(f"Evolution of {fold} for each models")
 		plt.xlabel(f"Epoch")
 		plt.ylabel(f"Loss")
 		plt.yscale(f"log")

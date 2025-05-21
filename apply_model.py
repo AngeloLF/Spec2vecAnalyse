@@ -13,12 +13,14 @@ if __name__ == "__main__":
     model_name = None
     folder_train = None
     folder_test = None
+    lr = None
 
     for argv in sys.argv[1:]:
 
         if argv[:6] == "model=" : model_name = argv[6:]
         if argv[:6] == "train=" : folder_train = argv[6:]
         if argv[:5] == "test=" : folder_test = argv[5:]
+        if argv[:3] == "lr=" : lr = f"{float(argv[3:]):.0e}"
 
     # Define model
     if model_name is None:
@@ -34,6 +36,11 @@ if __name__ == "__main__":
     if folder_test is None:
         print(f"{c.r}WARNING : test folder is not define (test=<folder_test>){c.d}")
         raise Exception("Test folder error")
+
+    # Define lr
+    if lr is None:
+        print(f"{c.r}WARNING : learning rate is not define (lr=<lr>){c.d}")
+        raise Exception("Lr error")
 
 
     path_results = './results'
@@ -53,41 +60,10 @@ if __name__ == "__main__":
     print(f"{c.ly}INFO : Utilisation de l'appareil pour l'inference : {c.tu}{device}{c.d}{c.d}")
 
 
-    if model_name.lower() == "scam":
+    if "SCaM" in model_name:
 
-        from Spec2vecModels.SCaM.model import SCaM_Model as model
-        from Spec2vecModels.SCaM.model import SCaM_Dataset as model_dataset
-        model_name = "SCaM"
-
-    elif model_name.lower() == "scam_l1":
-
-        from Spec2vecModels.SCaM_L1.model import SCaM_Model as model
-        from Spec2vecModels.SCaM_L1.model import SCaM_Dataset as model_dataset
-        model_name = "SCaM_L1"
-
-    elif model_name.lower() == "scam_hl1":
-
-        from Spec2vecModels.SCaM_HL1.model import SCaM_Model as model
-        from Spec2vecModels.SCaM_HL1.model import SCaM_Dataset as model_dataset
-        model_name = "SCaM_HL1"
-
-    elif model_name.lower() == "scam_hl3":
-
-        from Spec2vecModels.SCaM_HL3.model import SCaM_Model as model
-        from Spec2vecModels.SCaM_HL3.model import SCaM_Dataset as model_dataset
-        model_name = "SCaM_HL3"
-
-    elif model_name.lower() == "scam_msle":
-
-        from Spec2vecModels.SCaM_MSLE.model import SCaM_Model as model
-        from Spec2vecModels.SCaM_MSLE.model import SCaM_Dataset as model_dataset
-        model_name = "SCaM_MSLE"
-
-    elif model_name.lower() == "jec_unet":
-
-        from Spec2vecModels.JEC_Unet.model import UNet as model
-        from Spec2vecModels.JEC_Unet.model import CustumDataset as model_dataset
-        model_name = "JEC_Unet"
+        from Spec2vecModels.architecture_SCaM import SCaM_Model as model
+        from Spec2vecModels.architecture_SCaM import SCaM_Dataset as model_dataset
 
     else:
 
@@ -102,15 +78,15 @@ if __name__ == "__main__":
     loaded_model = model()
 
     # Loading training
-    MODEL_W = f"./results/Spec2vecModels_Results/{model_name}/states/{folder_train}.pth"
-    print(f"{c.ly}INFO : Loading {loaded_model.nameOfThisModel} with file {c.tu}{MODEL_W}{c.ru} ... {c.d}")
+    MODEL_W = f"./results/Spec2vecModels_Results/{model_name}/states/{folder_train}_{lr}_best.pth"
+    print(f"{c.ly}INFO : Loading {model_name} with file {c.tu}{MODEL_W}{c.ru} ... {c.d}")
     state = torch.load(MODEL_W)
     loaded_model.load_state_dict(state['model_state_dict'])
     loaded_model.eval()
     loaded_model.to(device)
     print(f"{c.ly}Loading ok{c.d}")
     
-    pred_fold_name = f"pred_{loaded_model.nameOfThisModel}_{folder_train}"
+    pred_fold_name = f"pred_{model_name}_{folder_train}_{lr}"
 
 
     nb_folds = len(folders)
