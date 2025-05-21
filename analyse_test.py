@@ -67,7 +67,7 @@ def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, 
     true = np.load(f"{fold}/spectrum/spectrum_{num_spec}.npy")
     image = np.load(f"{fold}/image/image_{num_spec}.npy")
 
-    flux = np.sum(true) * 140 # flux in adu ~
+    flux = np.sum(true) # flux in adu ~
 
     tn, pn, s, sn = compute_score(score_type, true, pred, give_norm_array=True)
     if give_norma : true, pred = tn, pn
@@ -173,7 +173,7 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
         pred = np.load(f"{fold}/{pred_folder}/{file}")
         true = np.load(f"{fold}/spectrum/{file}")
 
-        res["flux"][i] = np.sum(true) * 140 # flux in adu ~
+        res["flux"][i] = np.sum(true) # flux in adu ~
 
         score, score_norma = compute_score(score_type, true, pred)
         res["classic"][i] = score
