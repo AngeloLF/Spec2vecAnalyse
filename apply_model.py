@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # Loading training
     MODEL_W = f"./results/Spec2vecModels_Results/{model_name}/states/{folder_train}_{lr}_best.pth"
     print(f"{c.ly}INFO : Loading {model_name} with file {c.tu}{MODEL_W}{c.ru} ... {c.d}")
-    state = torch.load(MODEL_W)
+    state = torch.load(MODEL_W, map_location=torch.device('cpu'))
     loaded_model.load_state_dict(state['model_state_dict'])
     loaded_model.eval()
     loaded_model.to(device)
