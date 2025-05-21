@@ -31,15 +31,6 @@ if __name__ == "__main__":
         if argv[:2] == "n=" : n = int(argv[2:])
 
 
-    # Selection du device
-    if "gpu" in sys.argv and torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        if "gpu" in sys.argv : print(f"{c.r}WARNING : GPU is not available for torch ... device turn to CPU ... ")
-        device = torch.device("cpu")
-    print(f"{c.ly}INFO : Utilisation de l'appareil pour l'inference : {c.tu}{device}{c.d}{c.d}")
-
-
     # path
     path_model_state = f"./results/Spec2vecModels_Results/{model}/states/{train}_{lr}_best.pth"
     path_image = f"./results/output_simu/{test}/image/image_{image}.npy"
@@ -52,13 +43,11 @@ if __name__ == "__main__":
     model = SCaM_Model()
     model.load_state_dict(torch.load(path_model_state)['model_state_dict'])
     model.eval()
-    model.to(device)
-
 
     # Image: numpy array [128, 1024] -> torch tensor [1, 1, 128, 1024]
     image_brut = np.load(path_image)
     image_norm = (image_brut - image_brut.min()) / (image_brut.max() - image_brut.min() + 1e-8)
-    image_tensor = torch.tensor(image_norm, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+    image_tensor = torch.tensor(image_norm, dtype=torch.float32).unsqueeze(0).unsqueeze(0)
 
     target_layer_name='conv3'
     target_neuron_idx = n
