@@ -15,7 +15,11 @@ def generate_html_table(colonnes, lignes, text, y):
 
     tds = {
         "def" : "td",
-        "min" : 'td style="background-color: #99FF33;"',
+        
+        "near_min" : 'td style="background-color: #00CC00;"',
+        "min" : 'td style="background-color: #66FF66;"',
+
+        "near_max" : 'td style="background-color: #CC0000;"',
         "max" : 'td style="background-color: #FF6666;"',
     }
 
@@ -30,8 +34,8 @@ def generate_html_table(colonnes, lignes, text, y):
         html += f'<th>{col}</th>'
     html += '</tr>\n'
 
-    argmax = np.argmax(y, axis=0)
-    argmin = np.argmin(y, axis=0)
+    argmin, argmax = np.argmin(y, axis=0), np.argmax(y, axis=0)
+    valmin, valmax = np.min(y, axis=0),    np.max(y, axis=0)
 
     # Lignes de données
     for i, ligne in enumerate(lignes):
@@ -39,6 +43,8 @@ def generate_html_table(colonnes, lignes, text, y):
         for j in range(len(colonnes)):
             if   i == argmin[j] : td = tds["min"]
             elif i == argmax[j] : td = tds["max"]
+            elif y[i, j] < valmin * 1.2 : td = tds["near_min"]
+            elif y[i, j] > valmax * 0.8 : td = tds["near_max"]
             else : td = tds["def"]
             html += f'<{td}>{text[i, j]}</td>'
         html += '</tr>\n'
@@ -66,8 +72,8 @@ for score in score_type:
     tests.sort()
 
 
-    y = np.zeros((2, len(models), len(tests)))
-    e = np.zeros((2, len(models), len(tests)))
+    y = np.zeros((2, len(models), len(tests))) + np.inf
+    e = np.zeros((2, len(models), len(tests))) + np.inf
     x = np.zeros((2, len(models), len(tests))).astype(str)
     x[:, :] = '---'
 
