@@ -80,6 +80,8 @@ for score in score_type:
                 with open(f"{path_analyse}/{score}/{model}/{test}/resume.txt", "r") as f:
                     data = f.read().split("\n")[:-1]
 
+                print(data)
+
                 for i, line in enumerate(data):
 
                     label, score_i = line.split("=")
