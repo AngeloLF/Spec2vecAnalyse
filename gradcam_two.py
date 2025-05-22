@@ -4,14 +4,12 @@ from pytorch_grad_cam.utils.image import show_cam_on_image
 
 import coloralf as c
 import os, sys
+import numpy as np
+import matplotlib.pyplot as plt
 import torch
 
 sys.path.append("./")
 from Spec2vecModels.architecture_SCaM import SCaM_Model
-
-
-
-
 
 
 
@@ -34,8 +32,6 @@ if __name__ == "__main__":
         if argv[:3] == "lr=" : lr = f"{float(argv[3:]):.0e}"
         if argv[:6] == "image=" : image = argv[6:]
         if argv[:2] == "n=" : n = int(argv[2:])
-
-
 
 
     # Selection du device
@@ -69,7 +65,7 @@ if __name__ == "__main__":
 
 
     target_layers = [model.conv3]
-    input_tensor = input_tensor # Create an input tensor image for your model..
+    input_tensor = image_tensor # Create an input tensor image for your model..
     # Note: input_tensor can be a batch tensor with several images!
 
     # We have to specify the target we want to generate the CAM for.
@@ -81,6 +77,18 @@ if __name__ == "__main__":
         grayscale_cam = cam(input_tensor=input_tensor, targets=targets)
         # In this example grayscale_cam has only one image in the batch:
         grayscale_cam = grayscale_cam[0, :]
-        visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
+        # visualization = show_cam_on_image(, grayscale_cam, use_rgb=True)
         # You can also get the model out
         model_outputs = cam.outputs
+
+        print(grayscale_cam.shape)
+        # print(model_outputs.shape)
+
+    plt.figure(figsize=(16, 8))
+    plt.imshow(np.log10(image_brut+1), cmap='gray')
+    plt.imshow(grayscale_cam, cmap='jet', alpha=0.5)
+    plt.title(f"Grad-CAM for {filename} on neuron n°{n}")
+    plt.colorbar()
+    plt.axis('off')
+    plt.savefig(f"{path_save}/{filename}.png")
+    plt.close()
