@@ -43,8 +43,8 @@ def generate_html_table(colonnes, lignes, text, y):
         for j in range(len(colonnes)):
             if   i == argmin[j] : td = tds["min"]
             elif i == argmax[j] : td = tds["max"]
-            elif y[i, j] < valmin * 1.2 : td = tds["near_min"]
-            elif y[i, j] > valmax * 0.8 : td = tds["near_max"]
+            elif y[i, j] < valmin[j] * 1.2 : td = tds["near_min"]
+            elif y[i, j] > valmax[j] * 0.8 : td = tds["near_max"]
             else : td = tds["def"]
             html += f'<{td}>{text[i, j]}</td>'
         html += '</tr>\n'
