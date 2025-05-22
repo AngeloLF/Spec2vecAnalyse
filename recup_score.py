@@ -17,12 +17,12 @@ def generate_html_table(colonnes, lignes, text, y):
         "def" : "td",
             
         "far_min" : 'td style="background-color: #CCFFCC;"',
-        "near_min" : 'td style="background-color: #00CC00;"',
-        "min" : 'td style="background-color: #66FF66;"',
+        "near_min" : 'td style="background-color: #66FF66;"',
+        "min" : 'td style="background-color: #00CC00;"',
 
         "far_max" : 'td style="background-color: #FFCCCC;"',
-        "near_max" : 'td style="background-color: #CC0000;"',
-        "max" : 'td style="background-color: #FF6666;"',
+        "near_max" : 'td style="background-color: #FF6666;"',
+        "max" : 'td style="background-color: #CC0000;"',
     }
 
     if text.shape != (len(lignes), len(colonnes)):
