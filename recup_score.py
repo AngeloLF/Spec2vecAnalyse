@@ -15,10 +15,12 @@ def generate_html_table(colonnes, lignes, text, y):
 
     tds = {
         "def" : "td",
-        
+            
+        "far_min" : 'td style="background-color: #CCFFCC;"',
         "near_min" : 'td style="background-color: #00CC00;"',
         "min" : 'td style="background-color: #66FF66;"',
 
+        "far_min" : 'td style="background-color: #FFCCCC;"',
         "near_max" : 'td style="background-color: #CC0000;"',
         "max" : 'td style="background-color: #FF6666;"',
     }
@@ -44,7 +46,9 @@ def generate_html_table(colonnes, lignes, text, y):
             if   i == argmin[j] : td = tds["min"]
             elif i == argmax[j] : td = tds["max"]
             elif y[i, j] < valmin[j] * 1.2 : td = tds["near_min"]
-            elif y[i, j] > valmax[j] * 0.8 : td = tds["near_max"]
+            elif y[i, j] < valmin[j] * 1.5 : td = tds["far_min"]
+            elif y[i, j] < valmin[j] / 1.5 : td = tds["far_max"] 
+            elif y[i, j] > valmax[j] / 1.2 : td = tds["near_max"]
             else : td = tds["def"]
             html += f'<{td}>{text[i, j]}</td>'
         html += '</tr>\n'
