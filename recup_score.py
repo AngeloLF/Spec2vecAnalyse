@@ -86,8 +86,8 @@ for score in score_type:
 
         for t, test in enumerate(tests):
 
-            tot_mean = list()
-            tot_std = list()
+            tot_mean = [list(), list()]
+            tot_std = [list(), list()]
 
             if test in os.listdir(f"{path_analyse}/{score}/{model}"):
 
@@ -110,8 +110,8 @@ for score in score_type:
                         e[i, m, t] = std
                         x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
 
-                        tot_mean.append(mean)
-                        tot_std.append(std)
+                        tot_mean[i].append(mean)
+                        tot_std[i].append(std)
 
                     except Exception as err:
                             
@@ -119,11 +119,12 @@ for score in score_type:
                         print(f"Error on {data} on {model} -> {test} ...")
 
 
-            mom = np.mean(tot_mean)
-            soa = np.sum(np.array(tot_std)**2)**0.5
-            y[i, m, -1] = mom
-            e[i, m, -1] = soa
-            x[i, m, -1] = f"{mom:.2f} ~ {soa:.2f}"
+            for i in range(2):
+                mom = np.mean(tot_mean[i])
+                soa = np.sum(np.array(tot_std[i])**2)**0.5
+                y[i, m, -1] = mom
+                e[i, m, -1] = soa
+                x[i, m, -1] = f"{mom:.2f} ~ {soa:.2f}"
 
     
 
