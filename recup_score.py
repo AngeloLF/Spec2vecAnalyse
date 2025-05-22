@@ -8,6 +8,35 @@ os.makedirs(path_resume, exist_ok=True)
 
 
 
+import numpy as np
+
+def generate_html_table(colonnes, lignes, y):
+
+    if y.shape != (len(lignes), len(colonnes)):
+        raise ValueError("Les dimensions de y ne correspondent pas aux longueurs des listes ligne et colonne.")
+
+    html = '<table border="1" style="border-collapse: collapse; text-align: center;">\n'
+    
+    # En-tête
+    html += '  <tr><th></th>'  # Coin supérieur gauche vide
+    for col in colonnes:
+        html += f'<th>{col}</th>'
+    html += '</tr>\n'
+    
+    # Lignes de données
+    for i, ligne in enumerate(lignes):
+        html += f'  <tr><th>{ligne}</th>'
+        for j in range(len(colonnes)):
+            html += f'<td>{y[i, j]}</td>'
+        html += '</tr>\n'
+    
+    html += '</table>'
+    return html
+
+
+
+
+
 for score in score_type:
 
 	print(f"\nConstruct score {score}")
@@ -30,6 +59,7 @@ for score in score_type:
 
 	y = np.zeros((2, len(models), len(tests)))
 	e = np.zeros((2, len(models), len(tests)))
+	x = np.zeros((2, len(models), len(tests))).astype(str)
 
 	
 	for m, model in enumerate(models):
@@ -47,6 +77,8 @@ for score in score_type:
 					mean, std = score_i.split("~")
 					y[i, m, t] = mean
 					e[i, m, t] = std
+					x[i, m, t] = f"{mean} ~ {std}"
+
 
 	if score in ["L1"]:
 
@@ -57,34 +89,44 @@ for score in score_type:
 	print("*")
 	print(e)
 
-	with open(f"{path_resume}/{score}.tex", "w") as f:
+	print()
+
+	with open(f"{path_resume}/{score}.html", "w") as f:
+
+		html_codes = [f"<h1>Score {score}</h1>"]
 
 		for i, typeScore in enumerate(["classic", "norma"]):
 
-			f.write("\n\n\n\\begin{" + "table" + "}[H]\n")
-			f.write("\\center\n")
-			f.write("\\caption{"+ f"{score} with {typeScore} way" + "}\n")
-			f.write("\\label{" + f"{typeScore}" + "}\n")
+			html_codes.append(f"<h2>{typeScore}</h2>")
+			html_codes.append(generate_html_table(tests, models, x[i]))
 
-			f.write("\\begin{" + "tabular" + "}{" + f"l|{'c'*len(tests)}" + "}\n")
-			f.write("\\hline\n")
+		f.write('\n'.join(html_codes))
 
-			f.write(f"Model & {'&'.join(tests)} \\\\ \n")
-			f.write("\\hline\n")
 
-			for m, model in enumerate(models):
+	# 		f.write("\n\n\n\\begin{" + "table" + "}[H]\n")
+	# 		f.write("\\center\n")
+	# 		f.write("\\caption{"+ f"{score} with {typeScore} way" + "}\n")
+	# 		f.write("\\label{" + f"{typeScore}" + "}\n")
 
-				lineLatex = [f"\\verb|{model}|"]
+	# 		f.write("\\begin{" + "tabular" + "}{" + f"l|{'c'*len(tests)}" + "}\n")
+	# 		f.write("\\hline\n")
 
-				for t, test in enumerate(tests):			
+	# 		f.write(f"Model & {'&'.join(tests)} \\\\ \n")
+	# 		f.write("\\hline\n")
 
-					if e[i, m, t] != 0 : lineLatex.append(f"${y[i, m, t]} \\pm {e[i, m, t]}$")
-					else : lineLatex.append(f" ")
+	# 		for m, model in enumerate(models):
 
-				f.write(' & '.join(lineLatex) + "\\\\ \n")
+	# 			lineLatex = [f"\\verb|{model}|"]
 
-			f.write("\\end{" + "tabular" + "}\n")
-			f.write("\\end{" + "table" + "}\n")
+	# 			for t, test in enumerate(tests):			
+
+	# 				if e[i, m, t] != 0 : lineLatex.append(f"${y[i, m, t]} \\pm {e[i, m, t]}$")
+	# 				else : lineLatex.append(f" ")
+
+	# 			f.write(' & '.join(lineLatex) + "\\\\ \n")
+
+	# 		f.write("\\end{" + "tabular" + "}\n")
+	# 		f.write("\\end{" + "table" + "}\n")
 
 
 
