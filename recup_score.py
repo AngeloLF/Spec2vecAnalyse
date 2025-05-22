@@ -18,11 +18,11 @@ def generate_html_table(colonnes, lignes, text, y):
             
         "far_min" : 'td style="background-color: #CCFFCC;"',
         "near_min" : 'td style="background-color: #66FF66;"',
-        "min" : 'td style="background-color: #00CC00;"',
+        "min" : 'td style="background-color: #00CC00; font-weight: bold;"',
 
         "far_max" : 'td style="background-color: #FFCCCC;"',
         "near_max" : 'td style="background-color: #FF6666;"',
-        "max" : 'td style="background-color: #CC0000;"',
+        "max" : 'td style="background-color: #CC0000; font-weight: bold;"',
     }
 
     if text.shape != (len(lignes), len(colonnes)):
@@ -76,15 +76,18 @@ for score in score_type:
     tests.sort()
 
 
-    y = np.zeros((2, len(models), len(tests))) + np.inf
-    e = np.zeros((2, len(models), len(tests))) + np.inf
-    x = np.zeros((2, len(models), len(tests))).astype(str)
+    y = np.zeros((2, len(models), len(tests)+1)) + np.inf
+    e = np.zeros((2, len(models), len(tests)+1)) + np.inf
+    x = np.zeros((2, len(models), len(tests)+1)).astype(str)
     x[:, :] = '---'
 
     
     for m, model in enumerate(models):
 
         for t, test in enumerate(tests):
+
+            tot_mean = list()
+            tot_std = list()
 
             if test in os.listdir(f"{path_analyse}/{score}/{model}"):
 
@@ -107,12 +110,25 @@ for score in score_type:
                         e[i, m, t] = std
                         x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
 
+                        tot_mean.append(mean)
+                        tot_std.append(std)
+
                     except Exception as err:
                             
                         print(f"\nException : {err} ...")
                         print(f"Error on {data} on {model} -> {test} ...")
 
-                    
+
+            mom = np.mean(tot_mean)
+            soa = np.sum(np.array(tot_std)**2)**0.5
+            y[i, m, -1] = mom
+            e[i, m, -1] = soa
+            x[i, m, -1] = f"{mom:.2f} ~ {soa:.2f}"
+
+    
+
+
+
 
 
     with open(f"{path_resume}/{score}.html", "w") as f:
@@ -122,7 +138,7 @@ for score in score_type:
         for i, typeScore in enumerate(["classic", "norma"]):
 
             html_codes.append(f"<h2>{typeScore}</h2>")
-            html_codes.append(generate_html_table(tests, models, x[i], y[i]))
+            html_codes.append(generate_html_table(tests+["Total"], models, x[i], y[i]))
 
         f.write('\n'.join(html_codes))
 
