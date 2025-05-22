@@ -80,21 +80,22 @@ for score in score_type:
                 with open(f"{path_analyse}/{score}/{model}/{test}/resume.txt", "r") as f:
                     data = f.read().split("\n")[:-1]
 
-                print(data)
-
                 for i, line in enumerate(data):
 
-                    label, score_i = line.split("=")
-                    mean, std = score_i.split("~")
+                    try:
+                        label, score_i = line.split("=")
+                        mean, std = score_i.split("~")
+                    except:
+                        print(f"Error on {data}...")
+
+                    if score in ["L1"]:
+                        mean *=100
+                        std *= 100
+
                     y[i, m, t] = mean
                     e[i, m, t] = std
                     x[i, m, t] = f"{mean} ~ {std}"
 
-
-    if score in ["L1"]:
-
-        y *= 100
-        e *= 100
 
     with open(f"{path_resume}/{score}.html", "w") as f:
 
