@@ -85,18 +85,20 @@ for score in score_type:
                     try:
                         label, score_i = line.split("=")
                         mean, std = score_i.split("~")
+                        mean = float(mean)
+                        std = float(std)
 
                         if score in ["L1"]:
-                            mean *=100
+                            mean *= 100
                             std *= 100
 
                         y[i, m, t] = mean
                         e[i, m, t] = std
-                        x[i, m, t] = f"{mean} ~ {std}"
+                        x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
 
                     except Exception as e:
                             
-                        print(f"Exception : {e} ...")
+                        print(f"\nException : {e} ...")
                         print(f"Error on {data}...")
 
                     
