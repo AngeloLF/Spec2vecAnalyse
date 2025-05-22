@@ -85,16 +85,21 @@ for score in score_type:
                     try:
                         label, score_i = line.split("=")
                         mean, std = score_i.split("~")
-                    except:
+
+                        if score in ["L1"]:
+                            mean *=100
+                            std *= 100
+
+                        y[i, m, t] = mean
+                        e[i, m, t] = std
+                        x[i, m, t] = f"{mean} ~ {std}"
+
+                    except Exception as e:
+                            
+                        print(f"Exception : {e} ...")
                         print(f"Error on {data}...")
 
-                    if score in ["L1"]:
-                        mean *=100
-                        std *= 100
-
-                    y[i, m, t] = mean
-                    e[i, m, t] = std
-                    x[i, m, t] = f"{mean} ~ {std}"
+                    
 
 
     with open(f"{path_resume}/{score}.html", "w") as f:
