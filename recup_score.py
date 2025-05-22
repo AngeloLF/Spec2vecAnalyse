@@ -20,7 +20,7 @@ def generate_html_table(colonnes, lignes, text, y):
         "near_min" : 'td style="background-color: #00CC00;"',
         "min" : 'td style="background-color: #66FF66;"',
 
-        "far_min" : 'td style="background-color: #FFCCCC;"',
+        "far_max" : 'td style="background-color: #FFCCCC;"',
         "near_max" : 'td style="background-color: #CC0000;"',
         "max" : 'td style="background-color: #FF6666;"',
     }
