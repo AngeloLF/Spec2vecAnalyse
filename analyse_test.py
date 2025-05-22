@@ -551,7 +551,7 @@ if __name__ == "__main__":
 
             for mode in ["classic", "norma"]:
 
-                f.write(f"{mode}={np.mean(res[mode]):.2f}~{np.std(res[mode]):.2f}\n")
+                f.write(f"{mode}={np.mean(res[mode])}~{np.std(res[mode])}\n")
 
 
     print(f"All time : {time()-total_time}")

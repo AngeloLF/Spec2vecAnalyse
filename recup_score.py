@@ -69,6 +69,7 @@ for score in score_type:
     y = np.zeros((2, len(models), len(tests)))
     e = np.zeros((2, len(models), len(tests)))
     x = np.zeros((2, len(models), len(tests))).astype(str)
+    x[:, :] = '---'
 
     
     for m, model in enumerate(models):
