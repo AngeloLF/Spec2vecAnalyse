@@ -96,10 +96,10 @@ for score in score_type:
                         e[i, m, t] = std
                         x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
 
-                    except Exception as e:
+                    except Exception as err:
                             
-                        print(f"\nException : {e} ...")
-                        print(f"Error on {data}...")
+                        print(f"\nException : {err} ...")
+                        print(f"Error on {data} on {model} -> {test} ...")
 
                     
 
