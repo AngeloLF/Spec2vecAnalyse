@@ -75,6 +75,11 @@ if __name__ == "__main__":
         from Spec2vecModels.architecture_SotSu import SotSu_Model as model
         from Spec2vecModels.architecture_SotSu import SotSu_Dataset as model_dataset
 
+    elif "SotSuv2_" in model_name:
+
+        from Spec2vecModels.architecture_SotSuv2 import SotSuv2_Model as model
+        from Spec2vecModels.architecture_SotSuv2 import SotSuv2_Dataset as model_dataset
+
     else:
 
         print(f"{c.r}WARNING : model name {c.d}{c.lr}{model_name}{c.d}{c.r} unknow ...{c.d}")
