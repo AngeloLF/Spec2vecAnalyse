@@ -1,7 +1,7 @@
 # from model import SpectralModel, SpectralDataset
 import torch
 
-import json, pickle, sys, os, shutil
+import json, pickle, sys, os, shutil, importlib
 from tqdm import tqdm
 import coloralf as c
 import numpy as np
@@ -60,29 +60,22 @@ if __name__ == "__main__":
     print(f"{c.ly}INFO : Utilisation de l'appareil pour l'inference : {c.tu}{device}{c.d}{c.d}")
 
 
-    if "SCaM_" in model_name:
+    architecture, loss_name = model_name.split("_")
 
-        from Spec2vecModels.architecture_SCaM import SCaM_Model as model
-        from Spec2vecModels.architecture_SCaM import SCaM_Dataset as model_dataset
+    if f"{architecture}.py" in os.listdir(f"Spec2vecModels/architecture"):
 
-    elif "SCaMv2_" in model_name:
+        module_name = f"{architecture}"
 
-        from Spec2vecModels.architecture_SCaMv2 import SCaMv2_Model as model
-        from Spec2vecModels.architecture_SCaMv2 import SCaMv2_Dataset as model_dataset        
+        print(f"{c.y}INFO : Import module {module_name} ...{c.d}")
+        module = importlib.import_module(f"Spec2vecModels.architecture.{module_name}")
 
-    elif "SotSu_" in model_name:
-
-        from Spec2vecModels.architecture_SotSu import SotSu_Model as model
-        from Spec2vecModels.architecture_SotSu import SotSu_Dataset as model_dataset
-
-    elif "SotSuv2_" in model_name:
-
-        from Spec2vecModels.architecture_SotSuv2 import SotSuv2_Model as model
-        from Spec2vecModels.architecture_SotSuv2 import SotSuv2_Dataset as model_dataset
+        print(f"{c.y}INFO : Import model {architecture}_Model et le dataloader {architecture}_Dataset ...{c.d}")
+        model = getattr(module, f"{architecture}_Model")
+        model_dataset = getattr(module, f"{architecture}_Dataset")
 
     else:
 
-        print(f"{c.r}WARNING : model name {c.d}{c.lr}{model_name}{c.d}{c.r} unknow ...{c.d}")
+        print(f"{c.r}WARNING : model architecture {c.d}{c.lr}{architecture}{c.d}{c.r} unknow ...{c.d}")
         sys.exit()
 
 
