@@ -60,10 +60,20 @@ if __name__ == "__main__":
     print(f"{c.ly}INFO : Utilisation de l'appareil pour l'inference : {c.tu}{device}{c.d}{c.d}")
 
 
-    if "SCaM" in model_name:
+    if "SCaM_" in model_name:
 
         from Spec2vecModels.architecture_SCaM import SCaM_Model as model
         from Spec2vecModels.architecture_SCaM import SCaM_Dataset as model_dataset
+
+    elif "SCaMv2_" in model_name:
+
+        from Spec2vecModels.architecture_SCaMv2 import SCaMv2_Model as model
+        from Spec2vecModels.architecture_SCaMv2 import SCaMv2_Dataset as model_dataset        
+
+    elif "SotSu_" in model_name:
+
+        from Spec2vecModels.architecture_SotSu import SotSu_Model as model
+        from Spec2vecModels.architecture_SotSu import SotSu_Dataset as model_dataset
 
     else:
 
