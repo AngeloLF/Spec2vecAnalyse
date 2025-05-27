@@ -11,6 +11,7 @@ sys.path.append('./')
 if __name__ == "__main__":
 
     model_name = None
+    loss_name = None
     folder_train = None
     folder_test = None
     lr = None
