@@ -1,4 +1,3 @@
-# from model import SpectralModel, SpectralDataset
 import torch
 
 import json, pickle, sys, os, shutil, importlib
@@ -6,97 +5,31 @@ from tqdm import tqdm
 import coloralf as c
 import numpy as np
 
+sys.path.append('./Spec2vecModels/')
+from get_argv import get_argv, get_device
 sys.path.append('./')
+
+
 
 if __name__ == "__main__":
 
-    model_name = None
-    loss_name = None
-    folder_train = None
-    folder_test = None
-    lr = None
-
-    for argv in sys.argv[1:]:
-
-        if argv[:6] == "model=" : model_name = argv[6:]
-        if argv[:6] == "train=" : folder_train = argv[6:]
-        if argv[:5] == "test=" : folder_test = argv[5:]
-        if argv[:3] == "lr=" : lr = f"{float(argv[3:]):.0e}"
-
-    # Define model
-    if model_name is None:
-        print(f"{c.r}WARNING : model name is not define (model=<model_name>){c.d}")
-        raise Exception("Model name error")
-
-    # Define train folder
-    if folder_train is None:
-        print(f"{c.r}WARNING : train folder is not define (train=<folder_train>){c.d}")
-        raise Exception("Train folder error")
-
-    # Define test folder
-    if folder_test is None:
-        print(f"{c.r}WARNING : test folder is not define (test=<folder_test>){c.d}")
-        raise Exception("Test folder error")
-
-    # Define lr
-    if lr is None:
-        print(f"{c.r}WARNING : learning rate is not define (lr=<lr>){c.d}")
-        raise Exception("Lr error")
-
+    
+    ### capture params
+    Args = get_argv(sys.argv[1:], prog="apply")
+    full_train_str = f"{Args.from_prefixe}{Args.train}"
+    model, Custom_dataloader, device = load_from_pretrained(Args.model, Args.loss, full_train_str, Args.lr_str, device)
+    pred_fold_name = f"pred_{Args.model}_{Args.loss}_{full_train_str}_{Args.lr_str}"
 
     path_results = './results'
     path_test = path_results
     path_train = f"{path_results}/output_simu"
 
-    if "output" in folder_test : folders = [f"{path_test}/{folder_test}/{sf}" for sf in os.listdir(f"{path_test}/{folder_test}") if "test" in sf]
-    else :                       folders = [f"{path_test}/output_simu/{folder_test}"]
-
-
-    # Selection du device
-    if "gpu" in sys.argv and torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        if "gpu" in sys.argv : print(f"{c.r}WARNING : GPU is not available for torch ... device turn to CPU ... ")
-        device = torch.device("cpu")
-    print(f"{c.ly}INFO : Utilisation de l'appareil pour l'inference : {c.tu}{device}{c.d}{c.d}")
-
-
-    architecture, loss_name = model_name.split("_")
-
-    if f"{architecture}.py" in os.listdir(f"Spec2vecModels/architecture"):
-
-        module_name = f"{architecture}"
-
-        print(f"{c.y}INFO : Import module {module_name} ...{c.d}")
-        module = importlib.import_module(f"Spec2vecModels.architecture.{module_name}")
-
-        print(f"{c.y}INFO : Import model {architecture}_Model et le dataloader {architecture}_Dataset ...{c.d}")
-        model = getattr(module, f"{architecture}_Model")
-        model_dataset = getattr(module, f"{architecture}_Dataset")
-
-    else:
-
-        print(f"{c.r}WARNING : model architecture {c.d}{c.lr}{architecture}{c.d}{c.r} unknow ...{c.d}")
-        sys.exit()
-
-
+    if "output" in Args.test : folders = [f"{path_test}/{Args.test}/{sf}" for sf in os.listdir(f"{path_test}/{Args.test}") if "test" in sf]
+    else :                     folders = [f"{path_test}/output_simu/{Args.test}"]
 
     
-    # Loading model
-    print(f"{c.ly}INFO : Loading model {c.tu}{model_name}{c.ru} ...{c.d}")
-    loaded_model = model()
-
-    # Loading training
-    MODEL_W = f"./results/Spec2vecModels_Results/{model_name}/states/{folder_train}_{lr}_best.pth"
-    print(f"{c.ly}INFO : Loading {model_name} with file {c.tu}{MODEL_W}{c.ru} ... {c.d}")
-    state = torch.load(MODEL_W, map_location=torch.device('cpu'))
-    loaded_model.load_state_dict(state['model_state_dict'])
-    loaded_model.eval()
-    loaded_model.to(device)
-    print(f"{c.ly}Loading ok{c.d}")
     
-    pred_fold_name = f"pred_{model_name}_{folder_train}_{lr}"
-
+    ### Apply 
 
     nb_folds = len(folders)
 
