@@ -4,7 +4,11 @@ import matplotlib.pyplot as plt
 import os, sys, pickle, json, shutil
 import coloralf as c
 
+from types import SimpleNamespace
 from time import time
+
+sys.path.append('./Spec2vecModels/')
+from get_argv import get_argv
 
 
 
@@ -97,20 +101,19 @@ def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, 
         plt.close()
 
 
-def makeOneSpec(fold, select_model, path_train, select_train, res, varp, n, 
-                path4save, give_norma, give_image, savename, score_type):
+def makeOneSpec(args, paths, folds, res, varp, n, give_norma, give_image, savename):
 
-    with open(f"{fold}/hparams.json", 'r') as f:
+    with open(f"{Paths.test}/hparams.json", 'r') as f:
         hparams = json.load(f)
 
     x = np.arange(hparams["LAMBDA_MIN"], hparams["LAMBDA_MAX"], hparams["LAMBDA_STEP"])
     num_spec = res["num"][n]
 
-    pred = np.load(f"{fold}/pred_{select_model}_{select_train}_{select_lr}/spectrum_{num_spec}.npy")
-    true = np.load(f"{fold}/spectrum/spectrum_{num_spec}.npy")
-    image = np.load(f"{fold}/image/image_{num_spec}.npy")
+    pred = np.load(f"{Paths.test}/{Folds.pred_folder}/spectrum_{num_spec}.npy")
+    true = np.load(f"{Paths.test}/spectrum/spectrum_{num_spec}.npy")
+    image = np.load(f"{Paths.test}/image/image_{num_spec}.npy")
 
-    tn, pn, s, sn = compute_score(score_type, true, pred, give_norm_array=True)
+    tn, pn, s, sn = compute_score(Args.score, true, pred, give_norm_array=True)
     if give_norma : true, pred = tn, pn
 
     plt.figure(figsize=(16, 8))
@@ -119,29 +122,29 @@ def makeOneSpec(fold, select_model, path_train, select_train, res, varp, n,
     plt.plot(x, true, c='g', label='True')
     plt.plot(x, pred, c='r', label='Pred')
 
-    plt.title(f"For {select_model} train with {select_train}_{select_lr} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/1000:.0f} kADU")
+    plt.title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/1000:.0f} kADU")
     plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
     for key, val in varp.items():
         if key != "TARGET" : plt.scatter([], [], marker='*', label=f"{key} = {val[n]:.2f}", color='k')
     plt.legend() 
     plt.xlabel(f"$\lambda$ (nm)")
-    plt.ylabel(f"{fold}/*/spectrum_{num_spec}.npy")
+    plt.ylabel(f"{Paths.test}/*/spectrum_{num_spec}.npy")
     
     if give_image:
         plt.subplot(212)
         plt.imshow(np.log10(image+1), cmap='gray')
         # plt.colorbar()
-        plt.savefig(f"{path4save}/example_image/{savename}.png")
+        plt.savefig(f"{Paths.save}/example_image/{savename}.png")
         plt.close()
     else:    
-        plt.savefig(f"{path4save}/example_spectrum/{savename}.png")
+        plt.savefig(f"{Paths.save}/example_spectrum/{savename}.png")
         plt.close()
 
 
 
 
 
-def open_fold_classico(fold, pred_folder, path4save, train_params, select_model, select_train, path_train, score_type, cmap="Reds", vmax=0.2, nb_level=10):
+def open_fold_classico(args, paths, folds, nb_level=10):
 
     """
     dict res : 
@@ -150,13 +153,12 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
         * axis 1 : len of n_var
     """
 
-    files = os.listdir(f"{fold}/spectrum")
-    fold_var = fold.split("test_")[-1]
+    files = os.listdir(f"{paths.test}/spectrum")
 
-    with open(f"{fold}/hist_params.json", 'r') as f:
+    with open(f"{paths.test}/hist_params.json", 'r') as f:
         params = json.load(f)
 
-    with open(f"{fold}/variable_params.pck", "rb") as f:
+    with open(f"{paths.test}/variable_params.pck", "rb") as f:
         var_params = pickle.load(f)
 
     res = {"classic" : np.zeros(params["nb_simu"]),
@@ -170,12 +172,12 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
 
         num_spec_str = file.split("_")[-1][:-4]
 
-        pred = np.load(f"{fold}/{pred_folder}/{file}")
-        true = np.load(f"{fold}/spectrum/{file}")
+        pred = np.load(f"{paths.test}/{folds.pred_folder}/{file}")
+        true = np.load(f"{paths.test}/spectrum/{file}")
 
         res["flux"][i] = np.sum(true) # flux in adu ~
 
-        score, score_norma = compute_score(score_type, true, pred)
+        score, score_norma = compute_score(Args.score, true, pred)
         res["classic"][i] = score
         res["norma"][i] = score_norma
         res["file"][i] = file
@@ -189,7 +191,7 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
     plt.ylabel(f"Score (%)")
     plt.xscale("log")
     plt.legend()
-    plt.savefig(f"{path4save}/flux2score.png")
+    plt.savefig(f"{Paths.save}/flux2score.png")
     plt.close()
 
 
@@ -200,8 +202,8 @@ def open_fold_classico(fold, pred_folder, path4save, train_params, select_model,
         for i, level in enumerate(np.linspace(np.min(res[mode]), np.max(res[mode]), nb_level)):
 
             near = np.argmin(np.abs(res[mode]-level))
-            makeOneSpec(fold, select_model, path_train, select_train, res, var_params, near, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}", score_type=select_score_type)
-            makeOneSpec(fold, select_model, path_train, select_train, res, var_params, near, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}", score_type=select_score_type)
+            makeOneSpec(args, paths, folds, res, var_params, near, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}")
+            makeOneSpec(args, paths, folds, res, var_params, near, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}")
 
 
 
@@ -346,81 +348,68 @@ def plotMinMaxScore(X, Y, minXY, maxXY, dX):
 
 if __name__ == "__main__":
 
+
+    """
+
+    results |-- output_simu |-- Args.train --- hist_params.json
+            |               |-- Args.test  |-- <Folds.pred_folder>
+            |                              |-- spectrum
+            |                              |-- hist_params.json
+            |                              |-- variable_params.pck
+            |
+            |
+            |-- analyse     --- Args.score --- <Folds.pred_folder> --- Args.test (-> Paths.save)
+
+                                                
+    """
+
+
     total_time = time()
 
-    select_model = None
-    select_train = None
-    select_test = None
-    select_lr = None
-    select_score_type = None
+    Args = get_argv(sys.argv[1:], prog="analyse")
 
-    for argv in sys.argv[1:]:
+    Paths = SimpleNamespace()
+    Folds = SimpleNamespace()
 
-        if argv[:6] == "model=" : select_model = argv[6:]
-        if argv[:6] == "train=" : select_train = argv[6:]
-        if argv[:5] == "test=" : select_test = argv[5:]
-        if argv[:3] == "lr=" : select_lr = f"{float(argv[3:]):.0e}"
-        if argv[:6] == "score=" : select_score_type = argv[6:]
-
-    # Define model
-    if select_model is None:
-        print(f"{c.r}WARNING : model name is not define (model=<select_model>){c.d}")
-        raise ValueError("Model name error")
-
-    # Define train folder
-    if select_train is None:
-        print(f"{c.r}WARNING : train folder is not define (train=<select_train>){c.d}")
-        raise ValueError("Train folder error")
-
-    # Define test folder
-    if select_test is None:
-        print(f"{c.r}WARNING : test folder is not define (test=<select_test>){c.d}")
-        raise ValueError("Test folder error")
-
-    # Define test folder
-    if select_lr is None:
-        print(f"{c.r}WARNING : lr is not define (lr=<lr>){c.d}")
-        raise ValueError("Lr error")
-
-    # Define test folder
-    if select_score_type is None:
-        print(f"{c.r}WARNING : Score type is not define (score=<score_type>){c.d}")
-        raise ValueError("Score type error")
 
     # Define path test
-    if "output" in select_test : path_test = "./results"
-    else : path_test = "./results/output_simu"
+    if "output" in Args.test : Paths.for_test = "./results"
+    else : Paths.for_test = "./results/output_simu"
+    Paths.test = f"{Paths.for_test}/{Args.test}"
 
-    path_train = './results/output_simu'
+    Paths.for_train = './results/output_simu'
+    Paths.train = f"{Paths.for_train}/{Args.train}"
 
-    path_save = f"./results/analyse/{select_score_type}"
-    pred_folder = f"pred_{select_model}_{select_train}_{select_lr}"
+    Paths.analyse = f"./results/analyse"
+    Paths.score = f"{Paths.analyse}/{Args.score}"
 
-    os.makedirs(f"./results/analyse", exist_ok=True)
-    os.makedirs(f"./results/analyse/{select_score_type}", exist_ok=True)
-    os.makedirs(f"{path_save}/{pred_folder}", exist_ok=True) 
+    Folds.pred_folder = f"pred_{Args.fullname}"
+    Paths.pred_folder = f"{Paths.score}/{Folds.pred_folder}"
+
+    os.makedirs(Paths.analyse, exist_ok=True)
+    os.makedirs(Paths.score, exist_ok=True)
+    os.makedirs(Paths.pred_folder, exist_ok=True)
     
 
     # chargement des params du train 
-    with open(f"{path_train}/{select_train}/hist_params.json", 'r') as f:
+    with open(f"{Paths.train}/hist_params.json", 'r') as f:
         train_params = json.load(f)
 
 
 
     # For each folder test (like output construct with lsp)
-    test_folder = select_test
-
-    path4save = f"{path_save}/{pred_folder}/{test_folder}"
-    if test_folder in os.listdir(f"{path_save}/{pred_folder}") : shutil.rmtree(f"{path_save}/{pred_folder}/{test_folder}")
-    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}")
-    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/metric")
-    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/example_spectrum")
-    os.mkdir(f"{path_save}/{pred_folder}/{test_folder}/example_image")
+    Paths.save = f"{Paths.pred_folder}/{Args.test}"
+    if Args.test in os.listdir(Paths.pred_folder) : shutil.rmtree(Paths.save)
+    os.mkdir(f"{Paths.save}")
+    os.mkdir(f"{Paths.save}/metric")
+    os.mkdir(f"{Paths.save}/example_spectrum")
+    os.mkdir(f"{Paths.save}/example_image")
 
 
-    if test_folder == "output_test":
 
-        sub_folds = [f"{path_test}/{test_folder}/{sf}" for sf in os.listdir(f"{path_test}/{test_folder}") if "test" in sf]
+    if Args.test == "output_test":
+
+        sub_folds = [f"{path_test}/{Args.test}/{sf}" for sf in os.listdir(f"{path_test}/{Args.test}") if "test" in sf]
         nsub = len(sub_folds)
 
         all_res = {"classic":None, "norma":None}
@@ -458,7 +447,7 @@ if __name__ == "__main__":
 
         plt.xlabel("Targets")
         plt.ylabel("Scores")
-        plt.title(f"Score for each traget in {test_folder}")
+        plt.title(f"Score for each traget in {Args.test}")
         plt.xticks(x_positions, targets_labels, rotation=90)
         plt.grid(axis='y', linestyle='--')
         plt.ylim(0, 1)
@@ -479,10 +468,8 @@ if __name__ == "__main__":
 
     else:
 
-
         t0 = time()
-        res, var = open_fold_classico(fold=f"{path_train}/{test_folder}", pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
-                select_model=select_model, select_train=select_train, path_train=path_train, score_type=select_score_type)
+        res, var = open_fold_classico(Args, Paths, Folds)
         print(time()-t0)
 
 
@@ -497,7 +484,7 @@ if __name__ == "__main__":
                 plt.legend()
                 plt.xlabel(f"Variable {key}")
                 plt.ylabel(f"Score (%)")
-                plt.savefig(f"{path4save}/metric/{key}.png")
+                plt.savefig(f"{Paths.save}/metric/{key}.png")
                 plt.close()
 
             else:
@@ -535,19 +522,19 @@ if __name__ == "__main__":
 
                 plt.xlabel("Targets")
                 plt.ylabel("Scores")
-                plt.title(f"Score for each traget in {test_folder}")
+                plt.title(f"Score for each traget in {Args.test}")
                 plt.xticks(x_positions, targets_labels, rotation=90)
                 plt.grid(axis='y', linestyle='--')
                 plt.ylim(0)
                 plt.tight_layout()
-                plt.savefig(f"{path4save}/for_target.png")
+                plt.savefig(f"{Paths.save}/for_target.png")
                 plt.close()
 
 
 
 
 
-        with open(f"{path4save}/resume.txt", "w") as f:
+        with open(f"{Paths.save}/resume.txt", "w") as f:
 
             for mode in ["classic", "norma"]:
 

@@ -7,6 +7,7 @@ import numpy as np
 
 sys.path.append('./Spec2vecModels/')
 from get_argv import get_argv, get_device
+from train_models import load_from_pretrained
 sys.path.append('./')
 
 
@@ -15,9 +16,10 @@ if __name__ == "__main__":
 
     
     ### capture params
-    Args = get_argv(sys.argv[1:], prog="apply")
+    Args = get_argv(sys.argv[:1], prog="apply")
+    device = get_device(Args)
     full_train_str = f"{Args.from_prefixe}{Args.train}"
-    model, Custom_dataloader, device = load_from_pretrained(Args.model, Args.loss, full_train_str, Args.lr_str, device)
+    model, Custom_dataloader = load_from_pretrained(Args.model, Args.loss, full_train_str, Args.lr_str, device=device)
     pred_fold_name = f"pred_{Args.model}_{Args.loss}_{full_train_str}_{Args.lr_str}"
 
     path_results = './results'
@@ -41,7 +43,7 @@ if __name__ == "__main__":
         os.mkdir(f"{fold}/{pred_fold_name}")
         print(f"{c.ly}INFO : creation of {fold}/{pred_fold_name}{c.d}")
 
-        test_dataset = model_dataset(f"{fold}/image", f"{fold}/spectrum")
+        test_dataset = Custom_dataloader(f"{fold}/image", f"{fold}/spectrum")
 
         with torch.no_grad():
 
@@ -52,7 +54,7 @@ if __name__ == "__main__":
                 true_spec_name = spec_name.replace("\\", "/").split("/")[-1]
 
                 test_image = img.unsqueeze(0).to(device)
-                pred = loaded_model(test_image).cpu().numpy()[0]
+                pred = model(test_image).cpu().numpy()[0]
 
                 np.save(f"{fold}/{pred_fold_name}/{true_spec_name}", pred)
                 pbar.update(1)
