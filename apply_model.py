@@ -16,7 +16,7 @@ if __name__ == "__main__":
 
     
     ### capture params
-    Args = get_argv(sys.argv[:1], prog="apply")
+    Args = get_argv(sys.argv[1:], prog="apply")
     device = get_device(Args)
     full_train_str = f"{Args.from_prefixe}{Args.train}"
     model, Custom_dataloader = load_from_pretrained(Args.model, Args.loss, full_train_str, Args.lr_str, device=device)
