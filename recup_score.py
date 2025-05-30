@@ -7,8 +7,58 @@ path_resume = f"{path_analyse}/all_resume"
 os.makedirs(path_resume, exist_ok=True)
 
 
+if "local" in sys.argv:
+    tests = ["test64"]
+else:
+    tests = ["test1k", "test1kExt", "test1kOT", "test1kcalib"]
 
-import numpy as np
+
+
+def recup_mt(mode="dispo"):
+
+
+    if mode == "dispo":
+
+        models = os.listdir(f"./results/analyse/{score}")
+        # tests = list()
+
+        # for model in models:
+        #     tests += os.listdir(f"./results/analyse/{score}/{model}")
+
+
+
+    elif mode == "all":
+
+        model_name = os.listdir(f"./results/Spec2vecModels_Results")
+        models = list()
+
+        for mn in model_name:
+            states = os.listdir(f"./results/Spec2vecModels_Results/{mn}/states")
+
+            for state in states:
+
+                if "_best" in state:
+                    state_name = state.split("_best")[0] 
+                    models.append(f"{mn}_{state_name}")
+
+        print(models)
+
+
+
+    else:
+
+        raise Exception(f"Mode {mode} unknow")
+
+
+
+    return list(set(models))
+
+
+
+
+
+
+
 
 def generate_html_table(colonnes, lignes, text, y):
 
@@ -23,6 +73,8 @@ def generate_html_table(colonnes, lignes, text, y):
         "far_max" : 'td style="background-color: #FFCCCC;"',
         "near_max" : 'td style="background-color: #FF6666;"',
         "max" : 'td style="background-color: #CC0000; font-weight: bold;"',
+
+        "nan" : 'td style="background-color: #000000;"',
     }
 
     if text.shape != (len(lignes), len(colonnes)):
@@ -36,20 +88,28 @@ def generate_html_table(colonnes, lignes, text, y):
         html += f'<th>{col}</th>'
     html += '</tr>\n'
 
-    argmin, argmax = np.argmin(y, axis=0), np.argmax(y, axis=0)
-    valmin, valmax = np.min(y, axis=0),    np.max(y, axis=0)
+
+    buffer_y = np.copy(y)
+    buffer_y[y == np.inf] = np.nan
+
+    argmin, argmax = np.nanargmin(buffer_y, axis=0), np.nanargmax(buffer_y, axis=0)
+    valmin, valmax = np.nanmin(buffer_y, axis=0),    np.nanmax(buffer_y, axis=0)
 
     # Lignes de données
     for i, ligne in enumerate(lignes):
         html += f'  <tr><th>{ligne}</th>'
         for j in range(len(colonnes)):
+
             if   i == argmin[j] : td = tds["min"]
             elif i == argmax[j] : td = tds["max"]
             elif y[i, j] < valmin[j] * 1.2 : td = tds["near_min"]
             elif y[i, j] < valmin[j] * 1.5 : td = tds["far_min"]
             elif y[i, j] < valmin[j] / 1.5 : td = tds["far_max"] 
-            elif y[i, j] > valmax[j] / 1.2 : td = tds["near_max"]
+            elif y[i, j] > valmax[j] / 1.2 : td = tds["near_max"] 
             else : td = tds["def"]
+
+            if np.isnan(buffer_y[i, j]) : td = tds["nan"]
+
             html += f'<{td}>{text[i, j]}</td>'
         html += '</tr>\n'
     
@@ -57,23 +117,18 @@ def generate_html_table(colonnes, lignes, text, y):
     return html
 
 
-
-
+mode = "dispo" if "all" not in sys.argv else "all"
+models = recup_mt(mode)
 
 for score in score_type:
 
-    models = os.listdir(f"{path_analyse}/{score}")
-    tests = list()
+    if score not in os.listdir(f"{path_analyse}"):
+        break
 
-    for model in models:
-        tests += os.listdir(f"{path_analyse}/{score}/{model}")
-
-    tests = list(set(tests))
-
+    print(f"Open score {score}")
 
     # Sorting lists
     models.sort()
-    tests.sort()
 
 
     y = np.zeros((2, len(models), len(tests)+1)) + np.inf
@@ -84,16 +139,20 @@ for score in score_type:
     
     for m, model in enumerate(models):
 
+        print(f"Open model {model}")
+
         tot_mean = [list(), list()]
         tot_std = [list(), list()]
 
         for t, test in enumerate(tests):
 
-            
+            # print(model, test)
 
-            if test in os.listdir(f"{path_analyse}/{score}/{model}"):
+            if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
 
-                with open(f"{path_analyse}/{score}/{model}/{test}/resume.txt", "r") as f:
+                print(f"Analyse {score} > {model} -> {test}")
+
+                with open(f"{path_analyse}/{score}/pred_{model}/{test}/resume.txt", "r") as f:
                     data = f.read().split("\n")[:-1]
 
                 for i, line in enumerate(data):
