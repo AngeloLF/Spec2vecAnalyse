@@ -92,8 +92,19 @@ def generate_html_table(colonnes, lignes, text, y):
     buffer_y = np.copy(y)
     buffer_y[y == np.inf] = np.nan
 
-    argmin, argmax = np.nanargmin(buffer_y, axis=0), np.nanargmax(buffer_y, axis=0)
-    valmin, valmax = np.nanmin(buffer_y, axis=0),    np.nanmax(buffer_y, axis=0)
+    argmin, argmax = np.zeros(buffer_y.shape[1]) + np.nan, np.zeros(buffer_y.shape[1]) + np.nan
+    valmin, valmax = np.zeros(buffer_y.shape[1]) + np.nan, np.zeros(buffer_y.shape[1]) + np.nan
+
+    for k in range(buffer_y.shape[1]):
+
+        # print(buffer_y[:, k])
+
+        if not np.all(np.isnan(buffer_y[:, k])):
+
+            argmin[k], argmax[k] = np.nanargmin(buffer_y[:, k]), np.nanargmax(buffer_y[:, k])
+            valmin[k], valmax[k] = np.nanmin(buffer_y[:, k]),    np.nanmax(buffer_y[:, k])
+
+    # print(len(argmin), buffer_y.shape)
 
     # Lignes de données
     for i, ligne in enumerate(lignes):
