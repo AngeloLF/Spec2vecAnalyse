@@ -28,9 +28,6 @@ def recup_mt(mode="dispo"):
                     state_name = state.split("_best")[0] 
                     models.append(f"{mn}_{state_name}")
 
-        print(models)
-
-
 
     else:
 
@@ -149,7 +146,7 @@ def make_score(name_tests, tests, models, score_type, pbar):
 
                 if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
 
-                    print(f"Analyse {score} > {model} -> {test}")
+                    # print(f"Analyse {score} > {model} -> {test}")
 
                     with open(f"{path_analyse}/{score}/pred_{model}/{test}/resume.txt", "r") as f:
                         data = f.read().split("\n")[:-1]
@@ -204,10 +201,6 @@ def make_score(name_tests, tests, models, score_type, pbar):
 
 
 
-
-        print(y)
-
-
         with open(f"{path_resume}/{name_tests}_{score}.html", "w") as f:
 
             html_codes = [f"<h1>Score {score}</h1>"]
@@ -236,7 +229,7 @@ if __name__ == "__main__":
     mode = "dispo" if "all" not in sys.argv else "all"
     models = recup_mt(mode)
 
-    pbar = tqdm(total=nb_ft*len(models)*len(score_type))
+    pbar = tqdm(total=nb_ft*len(models))
 
     for name, test in tests.items():
 
