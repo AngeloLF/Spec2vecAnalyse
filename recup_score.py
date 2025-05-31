@@ -7,10 +7,9 @@ path_resume = f"{path_analyse}/all_resume"
 os.makedirs(path_resume, exist_ok=True)
 
 
-if "local" in sys.argv:
-    tests = ["test64"]
-else:
-    tests = ["test1k", "test1kExt", "test1kOT", "test1kcalib"]
+
+if "local" in sys.argv : tests = {"classic" : ["test64"]}
+else : tests = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}
 
 
 
@@ -128,120 +127,103 @@ def generate_html_table(colonnes, lignes, text, y):
     return html
 
 
-mode = "dispo" if "all" not in sys.argv else "all"
-models = recup_mt(mode)
+def make_score(name_tests, tests):
 
-for score in score_type:
+    mode = "dispo" if "all" not in sys.argv else "all"
+    models = recup_mt(mode)
 
-    if score not in os.listdir(f"{path_analyse}"):
-        break
+    for score in score_type:
 
-    print(f"Open score {score}")
+        if score not in os.listdir(f"{path_analyse}"):
+            break
 
-    # Sorting lists
-    models.sort()
+        print(f"Open score {score}")
 
-
-    y = np.zeros((2, len(models), len(tests)+1)) + np.inf
-    e = np.zeros((2, len(models), len(tests)+1)) + np.inf
-    x = np.zeros((2, len(models), len(tests)+1)).astype(str)
-    x[:, :] = '---'
-
-    
-    for m, model in enumerate(models):
-
-        print(f"Open model {model}")
-
-        tot_mean = [list(), list()]
-        tot_std = [list(), list()]
-
-        for t, test in enumerate(tests):
-
-            # print(model, test)
-
-            if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
-
-                print(f"Analyse {score} > {model} -> {test}")
-
-                with open(f"{path_analyse}/{score}/pred_{model}/{test}/resume.txt", "r") as f:
-                    data = f.read().split("\n")[:-1]
-
-                for i, line in enumerate(data):
-
-                    try:
-                        label, score_i = line.split("=")
-                        mean, std = score_i.split("~")
-                        mean = float(mean)
-                        std = float(std)
-
-                        if score in ["L1"]:
-                            mean *= 100
-                            std *= 100
-
-                        y[i, m, t] = mean
-                        e[i, m, t] = std
-                        x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
-
-                        tot_mean[i].append(mean)
-                        tot_std[i].append(std)
-
-                    except Exception as err:
-                            
-                        print(f"\nException : {err} ...")
-                        print(f"Error on {data} on {model} -> {test} ...")
+        # Sorting lists
+        models.sort()
 
 
-        for i in range(2):
+        y = np.zeros((2, len(models), len(tests)+1)) + np.inf
+        e = np.zeros((2, len(models), len(tests)+1)) + np.inf
+        x = np.zeros((2, len(models), len(tests)+1)).astype(str)
+        x[:, :] = '---'
 
-            mom = np.mean(tot_mean[i])
-            soa = np.sum(np.array(tot_std[i])**2)**0.5
-            y[i, m, -1] = mom
-            e[i, m, -1] = soa
-            x[i, m, -1] = f"{mom:.2f} ~ {soa:.2f}"
+        
+        for m, model in enumerate(models):
 
-    
+            print(f"Open model {model}")
+
+            tot_mean = [list(), list()]
+            tot_std = [list(), list()]
+
+            for t, test in enumerate(tests):
+
+                # print(model, test)
+
+                if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
+
+                    print(f"Analyse {score} > {model} -> {test}")
+
+                    with open(f"{path_analyse}/{score}/pred_{model}/{test}/resume.txt", "r") as f:
+                        data = f.read().split("\n")[:-1]
+
+                    for i, line in enumerate(data):
+
+                        try:
+                            label, score_i = line.split("=")
+                            mean, std = score_i.split("~")
+                            mean = float(mean)
+                            std = float(std)
+
+                            if score in ["L1"]:
+                                mean *= 100
+                                std *= 100
+
+                            y[i, m, t] = mean
+                            e[i, m, t] = std
+                            x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
+
+                            tot_mean[i].append(mean)
+                            tot_std[i].append(std)
+
+                        except Exception as err:
+                                
+                            print(f"\nException : {err} ...")
+                            print(f"Error on {data} on {model} -> {test} ...")
+
+
+            for i in range(2):
+
+                mom = np.mean(tot_mean[i])
+                soa = np.sum(np.array(tot_std[i])**2)**0.5
+                y[i, m, -1] = mom
+                e[i, m, -1] = soa
+                x[i, m, -1] = f"{mom:.2f} ~ {soa:.2f}"
+
+        
 
 
 
 
 
-    with open(f"{path_resume}/{score}.html", "w") as f:
+        with open(f"{path_resume}/{name_tests}_{score}.html", "w") as f:
 
-        html_codes = [f"<h1>Score {score}</h1>"]
+            html_codes = [f"<h1>Score {score}</h1>"]
 
-        for i, typeScore in enumerate(["classic", "norma"]):
+            for i, typeScore in enumerate(["classic", "norma"]):
 
-            html_codes.append(f"<h2>{typeScore}</h2>")
-            html_codes.append(generate_html_table(tests+["Total"], models, x[i], y[i]))
+                html_codes.append(f"<h2>{typeScore}</h2>")
+                html_codes.append(generate_html_table(tests+["Total"], models, x[i], y[i]))
 
-        f.write('\n'.join(html_codes))
+            f.write('\n'.join(html_codes))
 
 
-    #         f.write("\n\n\n\\begin{" + "table" + "}[H]\n")
-    #         f.write("\\center\n")
-    #         f.write("\\caption{"+ f"{score} with {typeScore} way" + "}\n")
-    #         f.write("\\label{" + f"{typeScore}" + "}\n")
 
-    #         f.write("\\begin{" + "tabular" + "}{" + f"l|{'c'*len(tests)}" + "}\n")
-    #         f.write("\\hline\n")
+if __name__ == "__main__":
 
-    #         f.write(f"Model & {'&'.join(tests)} \\\\ \n")
-    #         f.write("\\hline\n")
+    for name, test in tests.items():
 
-    #         for m, model in enumerate(models):
-
-    #             lineLatex = [f"\\verb|{model}|"]
-
-    #             for t, test in enumerate(tests):            
-
-    #                 if e[i, m, t] != 0 : lineLatex.append(f"${y[i, m, t]} \\pm {e[i, m, t]}$")
-    #                 else : lineLatex.append(f" ")
-
-    #             f.write(' & '.join(lineLatex) + "\\\\ \n")
-
-    #         f.write("\\end{" + "tabular" + "}\n")
-    #         f.write("\\end{" + "table" + "}\n")
-
+        make_score(name, test)
 
 
 
