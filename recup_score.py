@@ -1,15 +1,7 @@
 import os, sys
 import numpy as np
+from tqdm import tqdm
 
-score_type = ["L1", "chi2"]
-path_analyse = f"./results/analyse"
-path_resume = f"{path_analyse}/all_resume"
-os.makedirs(path_resume, exist_ok=True)
-
-
-
-if "local" in sys.argv : tests = {"classic" : ["test64"]}
-else : tests = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}
 
 
 
@@ -123,10 +115,9 @@ def generate_html_table(colonnes, lignes, text, y):
     return html
 
 
-def make_score(name_tests, tests):
+def make_score(name_tests, tests, models, score_type, pbar):
 
-    mode = "dispo" if "all" not in sys.argv else "all"
-    models = recup_mt(mode)
+    
 
     for score in score_type:
 
@@ -147,12 +138,12 @@ def make_score(name_tests, tests):
         
         for m, model in enumerate(models):
 
-            print(f"Open model {model}")
-
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
             for t, test in enumerate(tests):
+
+                pbar.update(1)
 
                 # print(model, test)
 
@@ -232,9 +223,26 @@ def make_score(name_tests, tests):
 
 if __name__ == "__main__":
 
+    score_type = ["L1", "chi2"]
+    path_analyse = f"./results/analyse"
+    path_resume = f"{path_analyse}/all_resume"
+    os.makedirs(path_resume, exist_ok=True)
+
+
+
+    if "local" in sys.argv : tests, nb_ft = {"classic" : ["test64"]}, 1
+    else : tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}, 4
+
+    mode = "dispo" if "all" not in sys.argv else "all"
+    models = recup_mt(mode)
+
+    pbar = tqdm(total=nb_ft*len(models)*len(score_type))
+
     for name, test in tests.items():
 
-        make_score(name, test)
+        make_score(name, test, models, score_type, pbar)
+
+    pbar.close()
 
 
 
