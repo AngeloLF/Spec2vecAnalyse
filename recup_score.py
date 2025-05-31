@@ -19,10 +19,6 @@ def recup_mt(mode="dispo"):
     if mode == "dispo":
 
         models = os.listdir(f"./results/analyse/{score}")
-        # tests = list()
-
-        # for model in models:
-        #     tests += os.listdir(f"./results/analyse/{score}/{model}")
 
 
 
@@ -143,9 +139,9 @@ def make_score(name_tests, tests):
         models.sort()
 
 
-        y = np.zeros((2, len(models), len(tests)+1)) + np.inf
-        e = np.zeros((2, len(models), len(tests)+1)) + np.inf
-        x = np.zeros((2, len(models), len(tests)+1)).astype(str)
+        y = np.zeros((2, len(models), len(tests)+2)) + np.inf
+        e = np.zeros((2, len(models), len(tests)+2)) + np.inf
+        x = np.zeros((2, len(models), len(tests)+2)).astype(str)
         x[:, :] = '---'
 
         
@@ -196,14 +192,29 @@ def make_score(name_tests, tests):
 
                 mom = np.mean(tot_mean[i])
                 soa = np.sum(np.array(tot_std[i])**2)**0.5
-                y[i, m, -1] = mom
-                e[i, m, -1] = soa
-                x[i, m, -1] = f"{mom:.2f} ~ {soa:.2f}"
+                y[i, m, -2] = mom
+                e[i, m, -2] = soa
+                x[i, m, -2] = f"{mom:.2f} ~ {soa:.2f}"
 
-        
+        for i in range(2):
+
+            y[i, :, -2][np.isnan(y[i, :, -2])] = np.inf
+            nb_m = len(y[i, :, -2])
+            order = np.zeros(nb_m)
+
+            for m, cl in enumerate(np.argsort(y[i, :, -2])):
+
+                order[cl] = m
+
+            order_norma = order / (nb_m-1) * 100
+
+            y[i, :, -1] = order_norma + 100
+            x[i, :, -1] = [f"{o:.2f} %" for o in order_norma]
 
 
 
+
+        print(y)
 
 
         with open(f"{path_resume}/{name_tests}_{score}.html", "w") as f:
@@ -213,7 +224,7 @@ def make_score(name_tests, tests):
             for i, typeScore in enumerate(["classic", "norma"]):
 
                 html_codes.append(f"<h2>{typeScore}</h2>")
-                html_codes.append(generate_html_table(tests+["Total"], models, x[i], y[i]))
+                html_codes.append(generate_html_table(tests+["Total", "Classement"], models, x[i], y[i]))
 
             f.write('\n'.join(html_codes))
 
