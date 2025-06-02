@@ -10,8 +10,9 @@ import torch
 from time import time
 from tqdm import tqdm
 
-sys.path.append("./")
-from Spec2vecModels.train_models import load_from_pretrained
+sys.path.append('./Spec2vecModels/')
+from get_argv import get_argv, get_device
+from train_models import load_from_pretrained
 
 
 
@@ -98,45 +99,14 @@ def make_mult_and_save(model, true, image_brut, image, layers, nb_neurons, path_
 
 if __name__ == "__main__":
 
-    model_name = None
-    loss_name = None
-    train = None
-    test = None
-    lr = None
-    image = None
-    n = None
-    n_bins = 800
-    is_pret = False
-    show = False
-    aug_smooth = False
-
-    for argv in sys.argv[1:]:
-
-        if argv[:6] == "model=" : model_name = argv[6:]
-        if argv[:5] == "loss=" : loss_name = argv[5:]
-        if argv[:6] == "train=" : train = argv[6:]
-        if argv[:5] == "test=" : test = argv[5:]
-        if argv[:3] == "lr=" : lr = f"{float(argv[3:]):.0e}"
-        if argv[:6] == "image=" : image = argv[6:]
-        if argv[:2] == "n=" : n = int(argv[2:])
-        if argv == "pre" : is_pret = True
-        if argv == "show" : show = True
-        if argv == "augs" : aug_smooth = True
-
-
-    # Selection du device
-    if "gpu" in sys.argv and torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        if "gpu" in sys.argv : print(f"{c.r}WARNING : GPU is not available for torch ... device turn to CPU ... ")
-        device = torch.device("cpu")
-    print(f"{c.ly}INFO : Utilisation de l'appareil pour l'inference : {c.tu}{device}{c.d}{c.d}")
+    Args = get_argv(sys.argv[1:], prog="gradcam")
+    device = get_device(Args)
+    model, _ = load_from_pretrained(Args.model, Args.loss, Args.fulltrain_str, Args.lr_str, device=device)
 
 
     # path
-    # path_model_state = f"./results/Spec2vecModels_Results/{model_name}_name/{is_pret}states/{is_pret}{train}_{lr}_best.pth"
-    path_image = f"./results/output_simu/{test}/image/image_{image}.npy"
-    path_spectrum = f"./results/output_simu/{test}/spectrum/spectrum_{image}.npy"
+    path_image = f"./results/output_simu/{Args.test}/image/image_{Args.image}.npy"
+    path_spectrum = f"./results/output_simu/{Args.test}/spectrum/spectrum_{Args.image}.npy"
     path_gradcam = f"./results/analyse/gradcam"
     os.makedirs(path_gradcam, exist_ok=True)
 
@@ -145,31 +115,26 @@ if __name__ == "__main__":
     os.makedirs(path_save_image, exist_ok=True)
     os.makedirs(path_save_spectrum, exist_ok=True)
 
-
-    # Load model
-    # model = SCaM_Model()
-    # model.load_state_dict(torch.load(path_model_state, map_location=device)['model_state_dict'])
-    # model.eval()
-    # model.to(device)
-    model, _ = load_from_pretrained(model_name, loss_name, train, lr, device, is_pret=is_pret)
-
     # Load image
     true = np.load(path_spectrum)
     image_brut = np.load(path_image)
+    if "no0" in sys.argv : image_brut[:, :128] = 0 
+    if "noS" in sys.argv : image_brut[:, 500:600] = 0 
     image_tensor = torch.tensor(image_brut, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
 
     # define target layers
-    target_layers = [model.conv3]
+    if Args.model == "SCaM" : target_layers = [model.conv3]
+    else : raise Exception(f"{c.r}WARNING : target layers for model architecture {Args.model} not define{c.d}")
 
 
-    if "one" in sys.argv[1:]:
+    if Args.mode == "one":
 
-        filename = f"{model_name}_{train}_{lr} - {test}_image_{image}"
-        make_one(model, true, image_brut, image_tensor, target_layers, n, path_save_image, path_save_spectrum, filename, show=show, aug_smooth=aug_smooth)
+        filename = f"{Args.fullname} - {Args.test}_image_{Args.image}"
+        make_one(model, true, image_brut, image_tensor, target_layers, Args.n, path_save_image, path_save_spectrum, filename, show=Args.show, aug_smooth=Args.aug_smooth)
 
-    elif "mult" in sys.argv[1:]:
+    elif Args.mode == "mult":
 
-        filename = f"{model_name}_{train}_{lr} - {test}"
-        make_mult_and_save(model, true, image_brut, image_tensor, target_layers, n, path_gradcam, filename, aug_smooth=aug_smooth)
+        filename = f"{Args.fullname} - {Args.test}_image_{Args.image}"
+        make_mult_and_save(model, true, image_brut, image_tensor, target_layers, Args.n, path_gradcam, filename, aug_smooth=Args.aug_smooth)
 
     

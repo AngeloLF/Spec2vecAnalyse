@@ -121,8 +121,6 @@ def make_score(name_tests, tests, models, score_type, pbar):
         if score not in os.listdir(f"{path_analyse}"):
             break
 
-        print(f"Open score {score}")
-
         # Sorting lists
         models.sort()
 
