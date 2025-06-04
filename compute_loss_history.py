@@ -48,7 +48,7 @@ def work_on(lock=''):
 			plt.title(f"Evolution of {fold} for each models")
 			plt.xlabel(f"Epoch")
 			plt.ylabel(f"Loss")
-			plt.yscale(f"log")
+			if "nolog" in sys.argv : plt.yscale(f"log")
 			plt.savefig(f"./{path_losses}/{fold}_{lock}.png")
 
 		else:
@@ -70,7 +70,7 @@ def work_on(lock=''):
 				plt.title(f"Evolution of loss for {name}")
 				plt.xlabel(f"Epoch")
 				plt.ylabel(f"Loss")
-				plt.yscale(f"log")
+				if "nolog" in sys.argv : plt.yscale(f"log")
 				plt.savefig(f"./{path_losses}/{fold}/loss_{name}_{lock}.png")
 
 
