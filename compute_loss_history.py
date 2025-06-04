@@ -40,15 +40,17 @@ def work_on(lock=''):
 				xmin = np.argmin(valid)
 				ymin = np.min(valid)
 
-				plt.plot(train, color=color, linestyle=':')
-				plt.plot(valid, color=color, linestyle='-', label=f"{name} : best at epoch {xmin} = {ymin:.2f}")
-				plt.scatter(xmin, ymin, facecolor=color, edgecolor='k', marker='d')
+				if not np.isnan(ymin):
+
+					plt.plot(train, color=color, linestyle=':')
+					plt.plot(valid, color=color, linestyle='-', label=f"{name} : best at epoch {xmin} = {ymin:.2f}")
+					plt.scatter(xmin, ymin, facecolor=color, edgecolor='k', marker='d')
 
 			plt.legend()
 			plt.title(f"Evolution of {fold} for each models")
 			plt.xlabel(f"Epoch")
 			plt.ylabel(f"Loss")
-			if "nolog" in sys.argv : plt.yscale(f"log")
+			if "nolog" not in sys.argv : plt.yscale(f"log")
 			plt.savefig(f"./{path_losses}/{fold}_{lock}.png")
 
 		else:
@@ -62,16 +64,18 @@ def work_on(lock=''):
 				xmin = np.argmin(valid)
 				ymin = np.min(valid)
 
-				plt.plot(train, color=color, linestyle=':')
-				plt.plot(valid, color=color, linestyle='-', label=f"{name} : best at epoch {xmin} = {ymin:.2f}")
-				plt.scatter(xmin, ymin, facecolor=color, edgecolor='k', marker='d')
+				if not np.isnan(ymin):
 
-				plt.legend()
-				plt.title(f"Evolution of loss for {name}")
-				plt.xlabel(f"Epoch")
-				plt.ylabel(f"Loss")
-				if "nolog" in sys.argv : plt.yscale(f"log")
-				plt.savefig(f"./{path_losses}/{fold}/loss_{name}_{lock}.png")
+					plt.plot(train, color=color, linestyle=':')
+					plt.plot(valid, color=color, linestyle='-', label=f"{name} : best at epoch {xmin} = {ymin:.2f}")
+					plt.scatter(xmin, ymin, facecolor=color, edgecolor='k', marker='d')
+
+					plt.legend()
+					plt.title(f"Evolution of loss for {name}")
+					plt.xlabel(f"Epoch")
+					plt.ylabel(f"Loss")
+					if "nolog" not in sys.argv : plt.yscale(f"log")
+					plt.savefig(f"./{path_losses}/{fold}/loss_{name}_{lock}.png")
 
 
 
