@@ -125,9 +125,9 @@ def make_score(name_tests, tests, models, score_type, pbar):
         models.sort()
 
 
-        y = np.zeros((2, len(models), len(tests)+2)) + np.inf
-        e = np.zeros((2, len(models), len(tests)+2)) + np.inf
-        x = np.zeros((2, len(models), len(tests)+2)).astype(str)
+        y = np.zeros((2, len(models), len(tests)+3)) + np.inf
+        e = np.zeros((2, len(models), len(tests)+3)) + np.inf
+        x = np.zeros((2, len(models), len(tests)+3)).astype(str)
         x[:, :] = '---'
 
         
@@ -178,13 +178,13 @@ def make_score(name_tests, tests, models, score_type, pbar):
 
                 mom = np.mean(tot_mean[i])
                 soa = np.sum(np.array(tot_std[i])**2)**0.5
-                y[i, m, -2] = mom
-                e[i, m, -2] = soa
-                x[i, m, -2] = f"{mom:.2f} ~ {soa:.2f}"
+                y[i, m, -3] = mom
+                e[i, m, -3] = soa
+                x[i, m, -3] = f"{mom:.2f} ~ {soa:.2f}"
 
         for i in range(2):
 
-            y[i, :, -2][np.isnan(y[i, :, -2])] = np.inf
+            y[i, :, -3][np.isnan(y[i, :, -2])] = np.inf
             nb_m = len(y[i, :, -2])
             order = np.zeros(nb_m)
 
@@ -197,6 +197,9 @@ def make_score(name_tests, tests, models, score_type, pbar):
             y[i, :, -1] = order_norma + 100
             x[i, :, -1] = [f"{o:.2f} %" for o in order_norma]
 
+            y[i, :, -2] = order_norma + 100
+            x[i, :, -2] = [f"{1+o}" for o in order]
+
 
 
         with open(f"{path_resume}/{name_tests}_{score}.html", "w") as f:
@@ -206,7 +209,7 @@ def make_score(name_tests, tests, models, score_type, pbar):
             for i, typeScore in enumerate(["classic", "norma"]):
 
                 html_codes.append(f"<h2>{typeScore}</h2>")
-                html_codes.append(generate_html_table(tests+["Total", "Classement"], models, x[i], y[i]))
+                html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i]))
 
             f.write('\n'.join(html_codes))
 
@@ -221,7 +224,7 @@ if __name__ == "__main__":
 
 
 
-    if "local" in sys.argv : tests, nb_ft = {"classic" : ["test64"]}, 1
+    if "local" in sys.argv : tests, nb_ft = {"classic" : ["test64"], "calib" : ["test64calib"]}, 2
     else : tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}, 4
 
     mode = "dispo" if "all" not in sys.argv else "all"
