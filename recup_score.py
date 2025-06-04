@@ -188,7 +188,7 @@ def make_score(name_tests, tests, models, score_type, pbar):
             nb_m = len(y[i, :, -3])
             order = np.zeros(nb_m)
 
-            for m, cl in enumerate(np.argsort(y[i, :, -2])):
+            for m, cl in enumerate(np.argsort(y[i, :, -3])):
 
                 order[cl] = m
 
