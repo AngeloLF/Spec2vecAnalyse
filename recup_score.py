@@ -1,4 +1,4 @@
-import os, sys
+import os, sys, shutil
 import numpy as np
 from tqdm import tqdm
 
@@ -222,6 +222,8 @@ if __name__ == "__main__":
     score_type = ["L1", "chi2"]
     path_analyse = f"./results/analyse"
     path_resume = f"{path_analyse}/all_resume"
+
+    if 'all_resume' in os.listdir(path_analyse) : shutil.rmtree(path_resume)
     os.makedirs(path_resume, exist_ok=True)
 
 
