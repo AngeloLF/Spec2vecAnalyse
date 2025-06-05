@@ -136,9 +136,9 @@ def make_score(name_tests, tests, models, score_type, pbar):
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
-            for t, otest in enumerate(tests):
+            for t, test in enumerate(tests):
 
-                test = otest if "no0" not in model else f"{test}no0"
+                # test = otest if "no0" not in model else f"{test}no0"
 
                 pbar.update(1)
 
@@ -227,7 +227,7 @@ if __name__ == "__main__":
 
 
     if "local" in sys.argv : tests, nb_ft = {"classic" : ["test64"], "calib" : ["test64calib"]}, 2
-    else : tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib", "test1kcalibno0"]}, 4
+    else : tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT", "test1kno0", "test1kExtno0", "test1kOTno0"], "calib" : ["test1kcalib", "test1kcalibno0"]}, 4
 
     mode = "dispo" if "all" not in sys.argv else "all"
     models = recup_mt(mode)
