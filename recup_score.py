@@ -1,7 +1,7 @@
 import os, sys, shutil
 import numpy as np
 from tqdm import tqdm
-
+import coloralf as c
 
 
 
@@ -142,11 +142,11 @@ def make_score(name_tests, tests, models, score_type, pbar):
 
                 pbar.update(1)
 
-                # print(model, test)
+                print(f"\n{c.lk}{model} : {test}")
 
                 if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
 
-                    # print(f"Analyse {score} > {model} -> {test}")
+                    print(f"{c.g}Analyse {score} > {model} -> {test}{c.d}")
 
                     with open(f"{path_analyse}/{score}/pred_{model}/{test}/resume.txt", "r") as f:
                         data = f.read().split("\n")[:-1]
@@ -174,6 +174,11 @@ def make_score(name_tests, tests, models, score_type, pbar):
                                 
                             print(f"\nException : {err} ...")
                             print(f"Error on {data} on {model} -> {test} ...")
+
+                else:
+
+                    print(f"{c.r}Analyse {score} > {model} -> {test} unknow{c.d}")
+
 
 
             for i in range(2):
