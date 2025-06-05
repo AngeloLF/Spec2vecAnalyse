@@ -141,7 +141,7 @@ def make_score(name_tests, tests, models, score_type, pbar):
 
             for t, otest in enumerate(tests):
 
-                test = otest if "no0" not in model else f"{test}no0"
+                test = otest if "no0" not in model else f"{otest}no0"
 
                 pbar.update(1)
 
