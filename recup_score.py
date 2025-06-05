@@ -136,7 +136,8 @@ def make_score(name_tests, tests, models, score_type, pbar):
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
-            print(f"\n{c.lk}{model}")
+            print(f"\n{c.lk}{model}{c.d}")
+            print(f"{c.lk}Tests : {tests}")
 
             for t, otest in enumerate(tests):
 
