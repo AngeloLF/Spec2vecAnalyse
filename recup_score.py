@@ -136,13 +136,13 @@ def make_score(name_tests, tests, models, score_type, pbar):
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
+            print(f"\n{c.lk}{model}")
+
             for t, otest in enumerate(tests):
 
                 test = otest if "no0" not in model else f"{test}no0"
 
                 pbar.update(1)
-
-                print(f"\n{c.lk}{model} : {test}")
 
                 if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
 
