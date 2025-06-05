@@ -229,7 +229,7 @@ if __name__ == "__main__":
 
 
     if "local" in sys.argv : tests, nb_ft = {"classic" : ["test64"], "calib" : ["test64calib"]}, 2
-    else : tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib", "test1kcalibno0"]}, 4
+    else : tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}, 4
 
     mode = "dispo" if "all" not in sys.argv else "all"
     models = recup_mt(mode)
