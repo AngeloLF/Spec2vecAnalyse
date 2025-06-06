@@ -25,8 +25,16 @@ def recup_mt(mode="dispo"):
             for state in states:
 
                 if "_best" in state:
+
                     state_name = state.split("_best")[0] 
-                    models.append(f"{mn}_{state_name}")
+
+                    if not ("cal" in state and state.count("train") == 1):
+                        
+                        models.append(f"{mn}_{state_name}")
+
+                    else:
+
+                        print(f"Exclude pre-trained {c.r}{mn}_{state_name}{c.d}")
 
 
     else:
@@ -136,9 +144,6 @@ def make_score(name_tests, tests, models, score_type, pbar):
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
-            print(f"\n{c.lk}{model}{c.d}")
-            print(f"{c.lk}Tests : {tests}")
-
             for t, otest in enumerate(tests):
 
                 test = otest if "no0" not in model else f"{otest}no0"
@@ -146,8 +151,6 @@ def make_score(name_tests, tests, models, score_type, pbar):
                 pbar.update(1)
 
                 if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
-
-                    print(f"{c.g}Analyse {score} > {model} -> {test}{c.d}")
 
                     with open(f"{path_analyse}/{score}/pred_{model}/{test}/resume.txt", "r") as f:
                         data = f.read().split("\n")[:-1]
@@ -178,8 +181,8 @@ def make_score(name_tests, tests, models, score_type, pbar):
 
                 else:
 
-                    print(f"{c.r}Analyse {score} > {model} -> {test} unknow{c.d}")
-
+                    # print(f"{c.r}Analyse {score} > {model} -> {test} unknow{c.d}")
+                    pass
 
 
             for i in range(2):
