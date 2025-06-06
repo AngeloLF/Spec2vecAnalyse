@@ -7,7 +7,7 @@ import os, sys, shutil
 
 
 
-def work_on(lock=''):
+def work_on(lock='', bans):
 
 	path_of_npy = f"{path_root}/Spec2vecModels_Results"
 	colors = ['g', 'r', 'b', 'k', 'm', 'y', 'c', 'darkgreen', 'darkred', 'darkblue', 'gray', 'darkmagenta', 'orange', 'darkcyan']
@@ -22,7 +22,7 @@ def work_on(lock=''):
 
 				name = f"{model}_{filename}"[:-4]
 
-				if lock in name:
+				if lock in name and np.sum([ban in name for ban in bans]) == 0:
 					
 					file = f"{path_of_npy}/{model}/{fold}/{filename}"
 					all_loss[name] = file
@@ -96,14 +96,30 @@ if __name__ == "__main__":
 	folders_loss = ["loss", "loss_mse", "loss_chi2"]
 	if folders_loss[0] not in os.listdir(path_losses) : os.mkdir(f"{path_losses}/{folders_loss[0]}")
 
+	
+
+	if len(sys.argv) > 2:
+
+		bans = sys.argv[2].split(",")
+
+		for ban in bans:
+			print(f"Bans : {ban}")
+
+	else:
+
+		bans = list()
+
 
 	if len(sys.argv) > 1:
 
 		locks = sys.argv[1].split(",")
 
-		for lock in locks :
+		for lock in locks:
 			print(f"Make lock : {lock}")
-			work_on(lock)
+			work_on(lock, bans)
+
+
+
 
 	else:
 
