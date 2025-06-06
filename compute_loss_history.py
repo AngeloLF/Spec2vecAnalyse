@@ -7,7 +7,7 @@ import os, sys, shutil
 
 
 
-def work_on(lock='', bans):
+def work_on(lock='', bans=list()):
 
 	path_of_npy = f"{path_root}/Spec2vecModels_Results"
 	colors = ['g', 'r', 'b', 'k', 'm', 'y', 'c', 'darkgreen', 'darkred', 'darkblue', 'gray', 'darkmagenta', 'orange', 'darkcyan']
