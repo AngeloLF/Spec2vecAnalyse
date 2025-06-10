@@ -2,6 +2,7 @@ import os, sys, shutil
 import numpy as np
 from tqdm import tqdm
 import coloralf as c
+import matplotlib.pyplot as plt
 
 
 
@@ -52,7 +53,7 @@ def recup_mt(mode="dispo"):
 
 
 
-def generate_html_table(colonnes, lignes, text, y, sorting=False):
+def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', savefig_name=None, markers=None, colors=None):
 
 
     if sorting:
@@ -63,9 +64,24 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False):
         text = text[index]
         lignes = [lignes[i] for i in index]
 
-        for i, name in enumerate(lignes):
+        for color_palette, palette in colors.items():
 
-            print(i, name, y[i])
+            for i, name in enumerate(lignes):
+
+                xg = np.ones(len(colonnes)-2) * i
+                yg = y[i][:-2]
+
+                color = 'k'
+                for pal, col in palette.items():
+                    if pal in name : color = col
+
+                plt.plot(xg, yg, color=color)
+
+                plt.scatter([i], yg[-1], color=color, marker="s")
+            
+            plt.xticks(np.arange(len(lignes)), lignes, rotation=90)
+            plt.tight_layout()
+            plt.savefig(f"{savefig_name}_{color_palette}.png")
 
 
 
@@ -135,7 +151,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False):
     return html
 
 
-def make_score(name_tests, tests, models, score_type, pbar):
+def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
 
     
 
@@ -229,14 +245,18 @@ def make_score(name_tests, tests, models, score_type, pbar):
 
         for sorting, sorting_str in [(False, ""), (True, "_sorting")]:
 
-            with open(f"{path_resume}/{name_tests}_{score}{sorting_str}.html", "w") as f:
+            with open(f"{path_resume}/html/{name_tests}_{score}{sorting_str}.html", "w") as f:
 
                 html_codes = [f"<h1>Score {score}</h1>"]
 
-                for i, typeScore in enumerate(["classic", "norma"]):
+                for i, typeScore in enumerate(["classic"]):
 
                     html_codes.append(f"<h2>{typeScore}</h2>")
-                    html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting))
+
+                    if score == "L1" and typeScore == "classic":
+                        html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/{name_tests}", markers=markers, colors=colors))
+                    else:
+                        html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i]))
 
                 f.write('\n'.join(html_codes))
 
@@ -250,11 +270,24 @@ if __name__ == "__main__":
 
     if 'all_resume' in os.listdir(path_analyse) : shutil.rmtree(path_resume)
     os.makedirs(path_resume, exist_ok=True)
+    os.makedirs(f"{path_resume}/graph", exist_ok=True)
+    os.makedirs(f"{path_resume}/html", exist_ok=True)
 
 
 
-    if "local" in sys.argv : tests, nb_ft = {"classic" : ["test64"], "calib" : ["test64calib"]}, 2
-    else : tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}, 4
+    if "local" in sys.argv:
+        tests, nb_ft = {"classic" : ["test64", "test64calib"], "calib" : ["test64calib"]}, 3
+        markers = {"classic" : None, "calib" : None}
+        colors = {"model":{"SCaM_chi2" : "r", "SCaM_L1N" : "b"}, "trainingType":{"calib":"g"}}
+    else: 
+        tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}, 4
+        markers = {"classic" : None, "calib" : None}
+        colors = {
+            "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
+            "metric"       : {"chi2" : "r", "MSE" : "b", "L1N" : "g"},
+            "trainingType" : {"wc_":"darkred", "wcno0":"r", "wcPXno0":"b"},
+            "trainNk"      : {"16k" : "g", "8k" : "b", "4k" : "r"}
+        }
 
     mode = "dispo" if "all" not in sys.argv else "all"
     models = recup_mt(mode)
@@ -263,7 +296,7 @@ if __name__ == "__main__":
 
     for name, test in tests.items():
 
-        make_score(name, test, models, score_type, pbar)
+        make_score(name, test, models, score_type, pbar, markers[name], colors)
 
     pbar.close()
 
