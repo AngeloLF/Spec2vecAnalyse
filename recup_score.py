@@ -293,7 +293,7 @@ if __name__ == "__main__":
         colors = {
             "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
             "metric"       : {"chi2" : "r", "MSE" : "b", "L1N" : "g"},
-            "trainingType" : {"wc_":"darkred", "wcno0":"r", "wcPXno0":"b"},
+            "trainingType" : {"wc_":"darkred", "wcno0":"r", "wcPXno0":"b", "kno0":"g"},
             "trainNk"      : {"16k" : "g", "8k" : "b", "4k" : "r"}
         }
 
