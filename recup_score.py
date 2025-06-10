@@ -81,8 +81,14 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
                 plt.scatter([i], yg[-1], color=color, marker="s")
             
+
+            for pal, col in palette.items():
+                plt.scatter([], [], color=col, marker='s', label=pal)
+
             plt.xticks(np.arange(len(lignes)), lignes, rotation=90)
             plt.tight_layout()
+            plt.yscale("log")
+            plt.legend()
             plt.savefig(f"{savefig_name}_{color_palette}.png")
             plt.close()
 
