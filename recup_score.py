@@ -59,15 +59,15 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False):
 
         index = np.argsort(y[:, -3])
 
-        print(index)
-
-        print("\nAvant :\n", lignes)
-
         y = y[index]
         text = text[index]
         lignes = [lignes[i] for i in index]
 
-        print("\nAprès :\n", lignes)
+        for i, name in enumerate(lignes):
+
+            print(i, name, y[i])
+
+
 
 
     tds = {
