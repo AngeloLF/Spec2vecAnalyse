@@ -75,7 +75,8 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
                 color = 'k'
                 for pal, col in palette.items():
-                    if pal in name : color = col
+                    if   color_palette != "learningRate" and pal in name      : color = col
+                    elif color_palette == "learningRate" and pal == name[-5:] : color = col
 
                 plt.plot(xg, yg, color=color)
 
@@ -286,16 +287,17 @@ if __name__ == "__main__":
     if "local" in sys.argv:
         tests, nb_ft = {"classic" : ["test64", "test64calib"], "calib" : ["test64calib"]}, 3
         markers = {"classic" : None, "calib" : None}
-        colors = {"model":{"SCaM_chi2" : "r", "SCaM_L1N" : "b"}, "trainingType":{"calib":"g"}}
     else: 
         tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}, 4
         markers = {"classic" : None, "calib" : None}
-        colors = {
-            "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
-            "metric"       : {"chi2" : "r", "MSE" : "b", "L1N" : "g"},
-            "trainingType" : {"kwc_":"darkred", "kwcno0":"r", "kwcPXno0":"b", "kno0":"g", "k_":"gray"},
-            "trainNk"      : {"16k" : "g", "8k" : "b", "4k" : "r", "2k" : "gray"}
-        }
+
+    colors = {
+        "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
+        "metric"       : {"chi2" : "r", "MSE" : "b", "L1N" : "g"},
+        "trainingType" : {"kwc_":"darkred", "kwcno0":"r", "kwcPXno0":"b", "kno0":"g", "k_":"gray"},
+        "trainNk"      : {"16k" : "g", "8k" : "b", "4k" : "r", "2k" : "gray"},
+        "learningRate" : {"1e-06":"b", "1e-05":"g", "5e-05":"yellow", "1e-04":"orange", "1e-03":"red", "1e-02":"darkred"}
+    }
 
     mode = "dispo" if "all" not in sys.argv else "all"
     models = recup_mt(mode)
