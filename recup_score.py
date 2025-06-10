@@ -66,6 +66,8 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
         for color_palette, palette in colors.items():
 
+            plt.figure(figsize=(19, 10))
+
             for i, name in enumerate(lignes):
 
                 xg = np.ones(len(colonnes)-2) * i
@@ -82,7 +84,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
             plt.xticks(np.arange(len(lignes)), lignes, rotation=90)
             plt.tight_layout()
             plt.savefig(f"{savefig_name}_{color_palette}.png")
-
+            plt.close()
 
 
 
