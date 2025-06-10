@@ -52,7 +52,22 @@ def recup_mt(mode="dispo"):
 
 
 
-def generate_html_table(colonnes, lignes, text, y):
+def generate_html_table(colonnes, lignes, text, y, sorting=False):
+
+
+    if sorting:
+
+        index = np.argsort(y[:, -3])
+
+        print(index)
+
+        print("\nAvant :\n", text)
+
+        y = y[index]
+        text = text[index]
+
+
+        print("\nAprès :\n", text)
 
 
     tds = {
@@ -212,17 +227,18 @@ def make_score(name_tests, tests, models, score_type, pbar):
             x[i, :, -2] = [f"{1+o}" for o in order]
 
 
+        for sorting, sorting_str in [(False, ""), (True, "_sorting")]:
 
-        with open(f"{path_resume}/{name_tests}_{score}.html", "w") as f:
+            with open(f"{path_resume}/{name_tests}_{score}{sorting_str}.html", "w") as f:
 
-            html_codes = [f"<h1>Score {score}</h1>"]
+                html_codes = [f"<h1>Score {score}</h1>"]
 
-            for i, typeScore in enumerate(["classic", "norma"]):
+                for i, typeScore in enumerate(["classic", "norma"]):
 
-                html_codes.append(f"<h2>{typeScore}</h2>")
-                html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i]))
+                    html_codes.append(f"<h2>{typeScore}</h2>")
+                    html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting))
 
-            f.write('\n'.join(html_codes))
+                f.write('\n'.join(html_codes))
 
 
 
