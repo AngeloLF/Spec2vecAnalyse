@@ -43,7 +43,7 @@ if __name__ == "__main__":
         os.mkdir(f"{fold}/{pred_fold_name}")
         print(f"{c.ly}INFO : creation of {fold}/{pred_fold_name}{c.d}")
 
-        test_dataset = Custom_dataloader(f"{fold}/image", f"{fold}/spectrum")
+        test_dataset = Custom_dataloader(f"{fold}/{model.folder_input}", f"{fold}/{model.folder_output}")
 
         with torch.no_grad():
 
@@ -57,6 +57,10 @@ if __name__ == "__main__":
                 pred = model(test_image).cpu().numpy()[0]
 
                 np.save(f"{fold}/{pred_fold_name}/{true_spec_name}", pred)
+
+                if "extraApply" in dir(model):
+                    getattr(model, "extraApply")(pred, f"{fold}/{pred_fold_name}", true_spec_name)
+                
                 pbar.update(1)
 
             pbar.close()
