@@ -34,7 +34,7 @@ if __name__ == "__main__":
 	n = int(Args.spec)
 
 
-	x = np.arange(300, 1100)
+	x = Args.wl
 
 	yt = np.load(f"{pathdata}/{specfolder}/{Args.folder_output}_{Args.spec}.npy")
 	yp = np.load(f"{pathdata}/{predfolder}/{Args.folder_output}_{Args.spec}.npy")
