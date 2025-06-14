@@ -27,7 +27,7 @@ if __name__ == "__main__":
 
 	pathdata = f"./results/output_simu/{Args.test}"
 	predfolder = f"pred_{Args.fullname}"
-	specfolder = f"spectrum"
+	specfolder = Args.folder_output
 
 	with open(f"{pathdata}/variable_params.pck", "rb") as f:
 		varp = pickle.load(f)
