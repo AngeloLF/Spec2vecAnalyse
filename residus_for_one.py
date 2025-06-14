@@ -36,11 +36,10 @@ if __name__ == "__main__":
 
 	x = np.arange(300, 1100)
 
-	yt = np.load(f"{pathdata}/{specfolder}/spectrum_{Args.spec}.npy")
-	yp = np.load(f"{pathdata}/{predfolder}/spectrum_{Args.spec}.npy")
+	yt = np.load(f"{pathdata}/{specfolder}/{Args.folder_output}_{Args.spec}.npy")
+	yp = np.load(f"{pathdata}/{predfolder}/{Args.folder_output}_{Args.spec}.npy")
 
-	res = (yt - yp) ** 2 / (yt + C**2)
-	
+	res = yt - yp / np.sqrt(yt + C**2)
 
 	fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(20, 8), gridspec_kw={'height_ratios': [3, 1]})
 
