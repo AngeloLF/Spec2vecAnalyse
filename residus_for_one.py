@@ -39,6 +39,8 @@ if __name__ == "__main__":
 	yt = np.load(f"{pathdata}/{specfolder}/{Args.folder_output}_{Args.spec}.npy")
 	yp = np.load(f"{pathdata}/{predfolder}/{Args.folder_output}_{Args.spec}.npy")
 
+	print(yt.shape, yp.shape)
+
 	res = yt - yp / np.sqrt(yt + C**2)
 
 	fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(20, 8), gridspec_kw={'height_ratios': [3, 1]})
