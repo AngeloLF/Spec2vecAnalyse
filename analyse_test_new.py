@@ -6,7 +6,6 @@ import coloralf as c
 
 from types import SimpleNamespace
 from time import time
-from tqdm import tqdm
 
 sys.path.append('./Spec2vecModels/')
 from get_argv import get_argv
@@ -37,8 +36,6 @@ def compute_score_L1(true, pred, give_norm_array=False):
     if give_norm_array : return tn, pn, score, score_norma
     else : return score, score_norma
 
-
-
 def compute_score_chi2(true, pred, Csigma_chi2=12, norma=800, give_norm_array=False):
 
     t = np.copy(true)
@@ -56,25 +53,64 @@ def compute_score_chi2(true, pred, Csigma_chi2=12, norma=800, give_norm_array=Fa
     if give_norm_array : return true, pred, chi2, norma
     else : return chi2, norma
 
-
-
 def compute_score(name, true, pred, give_norm_array=False):
 
     if name == "L1"   : return compute_score_L1(true, pred, give_norm_array=give_norm_array)
     if name == "chi2" : return compute_score_chi2(true, pred, give_norm_array=give_norm_array)
 
 
+def makeOneSpecOldStyle(fold, select_model, path_train, select_train, num_spec, varp, path4save, give_norma, give_image, savename, score_type):
 
-def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savename, gain=3.):
+    with open(f"{fold}/hparams.json", 'r') as f:
+        hparams = json.load(f)
+
+    x = np.arange(hparams["LAMBDA_MIN"], hparams["LAMBDA_MAX"], hparams["LAMBDA_STEP"])
+    n = int(num_spec)
+
+    pred = np.load(f"{fold}/pred_{select_model}_{select_train}_{select_lr}/spectrum_{num_spec}.npy")
+    true = np.load(f"{fold}/spectrum/spectrum_{num_spec}.npy")
+    image = np.load(f"{fold}/image/image_{num_spec}.npy")
+
+    flux = np.sum(true) # flux in adu ~
+
+    tn, pn, s, sn = compute_score(score_type, true, pred, give_norm_array=True)
+    if give_norma : true, pred = tn, pn
+
+    plt.figure(figsize=(16, 8))
+    if give_image : plt.subplot(211)
+
+    plt.plot(x, true, c='g', label='True')
+    plt.plot(x, pred, c='r', label='Pred')
+
+    plt.title(f"For {select_model} train with {select_train}_{select_lr} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {flux/1000:.0f} kADU")
+    plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
+    for key, val in varp.items():
+        if key != "TARGET" : plt.scatter([], [], marker='*', label=f"{key} = {val[n]:.2f}", color='k')
+    plt.legend() 
+    plt.xlabel(f"$\lambda$ (nm)")
+    plt.ylabel(f"{fold}/*/spectrum_{num_spec}.npy")
+    
+    if give_image:
+        plt.subplot(212)
+        plt.imshow(np.log10(image+1), cmap='gray')
+        # plt.colorbar()
+        plt.savefig(f"{path4save}/example_image/{savename}.png")
+        plt.close()
+    else:
+        plt.savefig(f"{path4save}/example_spectrum/{savename}.png")
+        plt.close()
+
+
+def makeOneSpec(args, paths, folds, res, varp, n, give_norma, give_image, savename):
 
     with open(f"{Paths.test}/hparams.json", 'r') as f:
         hparams = json.load(f)
 
-    x = Args.wl # np.arange(hparams["LAMBDA_MIN"], hparams["LAMBDA_MAX"], hparams["LAMBDA_STEP"])
+    x = np.arange(hparams["LAMBDA_MIN"], hparams["LAMBDA_MAX"], hparams["LAMBDA_STEP"])
     num_spec = res["num"][n]
 
-    pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
-    true = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
+    pred = np.load(f"{Paths.test}/{Folds.pred_folder}/spectrum_{num_spec}.npy")
+    true = np.load(f"{Paths.test}/spectrum/spectrum_{num_spec}.npy")
     image = np.load(f"{Paths.test}/image/image_{num_spec}.npy")
 
     tn, pn, s, sn = compute_score(Args.score, true, pred, give_norm_array=True)
@@ -86,19 +122,18 @@ def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savena
     plt.plot(x, true, c='g', label='True')
     plt.plot(x, pred, c='r', label='Pred')
 
-    plt.title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/gain/1000:.0f} kADU")
+    plt.title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/1000:.0f} kADU")
     plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
     for key, val in varp.items():
-        if key != "TARGET": 
-            skey = key if key not in tradargs.keys() else tradargs[key]
-            plt.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
+        if key != "TARGET" : plt.scatter([], [], marker='*', label=f"{key} = {val[n]:.2f}", color='k')
     plt.legend() 
     plt.xlabel(f"$\lambda$ (nm)")
-    plt.ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_spec}.npy")
+    plt.ylabel(f"{Paths.test}/*/spectrum_{num_spec}.npy")
     
     if give_image:
         plt.subplot(212)
         plt.imshow(np.log10(image+1), cmap='gray')
+        # plt.colorbar()
         plt.savefig(f"{Paths.save}/example_image/{savename}.png")
         plt.close()
     else:    
@@ -107,85 +142,9 @@ def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savena
 
 
 
-def makeResidus(Args, Paths, Folds, res, n, savename, C=12., gain=3.):
-
-    with open(f"{Paths.test}/variable_params.pck", "rb") as f:
-        varp = pickle.load(f)
-
-    num_spec = res["num"][n]
-    n = int(num_spec)
 
 
-    x = Args.wl
-
-    yt = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
-    yp = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
-
-    residu = (yt - yp) 
-    nor = np.sqrt(yt + C**2)
-
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(20, 8), gridspec_kw={'height_ratios': [3, 1]})
-
-    ax1.set_title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} | Flux : {np.sum(yt)/gain/1000:.0f} kADU")
-
-    ax1.plot(x, yt, label='Spectrum to predict', color="g")
-    ax1.plot(x, yp, label='Model prediction', color="r")
-
-    ax1.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
-    for key, val in varp.items():
-        if key != "TARGET": 
-            skey = key if key not in tradargs.keys() else tradargs[key]
-            ax1.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
-
-    ax1.set_ylabel(f"{Args.test}/*/spectrum_{num_spec}.npy")
-    ax1.legend()
-
-    ax2.axhline(0, color='k', linestyle='--', linewidth=1)
-    ax2.errorbar(x, residu / nor, yerr=1, marker='.', linestyle='', color='k', linewidth=0.5)
-    ax2.set_xlabel(f"$\lambda$ (nm)")
-    ax2.set_ylabel(f"$\chi^2$")
-
-    plt.tight_layout()
-    if not Args.show:
-        plt.savefig(f"{Paths.save}/residus/{savename}_residus.png")
-        plt.close()
-    else:
-        plt.show()
-
-
-    yts = np.sort(yt)
-    dmax = int(np.max(yts[1:] - yts[:-1])*2) + 1
-    nbins = int(np.max(yt) / dmax)
-
-    xbin = np.zeros(nbins)
-    resb = np.zeros(nbins)
-    ress = np.zeros(nbins)
-
-    for i in range(nbins):
-
-        resi = residu[(yt > i*dmax) & (yt < (i+1)*dmax)]
-
-        xbin[i] = dmax * (0.5 + i)
-        resb[i] = np.mean(resi**2)
-        ress[i] = np.std(resi**2)
-
-
-    plt.figure(figsize=(16, 10))
-    plt.plot(yt, residu**2, '.k', alpha=0.5)
-    plt.errorbar(xbin, resb, yerr=ress, color="r", linestyle="", marker=".")
-    plt.xlabel(r"$y_{true}$")
-    plt.ylabel(f"$res^2$")
-    if not Args.show:
-        plt.savefig(f"{Paths.save}/residus/{savename}_res2.png")
-        plt.close()
-    else:
-        plt.show()
-
-
-
-
-
-def open_fold(args, paths, folds, nb_level=10):
+def open_fold_classico(args, paths, folds, nb_level=10):
 
     """
     dict res : 
@@ -194,7 +153,7 @@ def open_fold(args, paths, folds, nb_level=10):
         * axis 1 : len of n_var
     """
 
-    files = os.listdir(f"{paths.test}/{Args.folder_output}")
+    files = os.listdir(f"{paths.test}/spectrum")
 
     with open(f"{paths.test}/hist_params.json", 'r') as f:
         params = json.load(f)
@@ -214,7 +173,7 @@ def open_fold(args, paths, folds, nb_level=10):
         num_spec_str = file.split("_")[-1][:-4]
 
         pred = np.load(f"{paths.test}/{folds.pred_folder}/{file}")
-        true = np.load(f"{paths.test}/{Args.folder_output}/{file}")
+        true = np.load(f"{paths.test}/spectrum/{file}")
 
         res["flux"][i] = np.sum(true) # flux in adu ~
 
@@ -245,13 +204,126 @@ def open_fold(args, paths, folds, nb_level=10):
             near = np.argmin(np.abs(res[mode]-level))
             makeOneSpec(args, paths, folds, res, var_params, near, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}")
             makeOneSpec(args, paths, folds, res, var_params, near, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}")
-            if mode == "classic" : makeResidus(args, paths, folds, res, near, savename=f"Level{i}_{mode}")
 
 
 
 
     return res, var_params
 
+
+
+
+
+
+def open_fold(fold, pred_folder, path4save, train_params, select_model, select_train, path_train, score_type, cmap="Reds", vmax=0.2):
+
+    """
+    dict res : 
+        * keys `classic` & `norma` give a matrice (n_target, n_var)
+        * axis 0 : len of n_target
+        * axis 1 : len of n_var
+    """
+
+    files = os.listdir(f"{fold}/spectrum")
+    fold_var = fold.split("test_")[-1]
+
+    with open(f"{fold}/hist_params.json", 'r') as f:
+        params = json.load(f)
+
+    with open(f"{fold}/variable_params.pck", "rb") as f:
+        var_params = pickle.load(f)
+
+    n_target = len(params["target_set"])
+    n_var = int(params["nb_simu"] / n_target)
+
+    # If 
+    if fold_var in params.keys(): 
+        var_name = fold_var
+        X = np.linspace(*params[var_name], n_var)
+    else:
+        var_name = f"{fold_var}"
+        X = np.linspace(0, 1, n_var)
+
+    res = {"classic" : np.zeros((n_target, n_var)),
+           "norma" : np.zeros((n_target, n_var))}
+
+    maxScore = {"classic":[-np.inf, None, None, None], "norma":[-np.inf, None, None, None]}
+    minScore = {"classic":[+np.inf, None, None, None], "norma":[+np.inf, None, None, None]}
+    # loading of each spectrum
+    for file in files:
+
+        num_spec_str = file.split("_")[-1][:-4]
+        num_spec = int(num_spec_str)
+        num_target = num_spec // n_var
+        num_var = num_spec % n_var
+
+        pred = np.load(f"{fold}/{pred_folder}/{file}")
+        true = np.load(f"{fold}/spectrum/{file}")
+
+        score, score_norma = compute_score(score_type, true, pred)
+        res["classic"][num_target, num_var] = score
+        res["norma"][num_target, num_var] = score_norma
+
+        if score > maxScore["classic"][0] : maxScore["classic"] = [score, file, [num_var, num_target], num_spec_str]
+        if score < minScore["classic"][0] : minScore["classic"] = [score, file, [num_var, num_target], num_spec_str]
+        if score_norma > maxScore["norma"][0] : maxScore["norma"] = [score_norma, file, [num_var, num_target], num_spec_str]
+        if score_norma < minScore["norma"][0] : minScore["norma"] = [score_norma, file, [num_var, num_target], num_spec_str]
+
+    # Calcul for y ticks
+    delta = X[-1] - X[0]
+    dX = delta / n_var
+    dY = delta / n_target
+    Y = X[0] + dY/2 + np.arange(n_target) * dY
+
+    # Each spectrum
+    plt.figure(figsize=(16, 8))
+
+    plt.subplot(221)
+    plt.imshow(res["classic"]*100, cmap=cmap, extent=[X[0], X[-1], X[0], X[-1]], origin='lower', vmin=0.0, vmax=vmax*100)
+    plt.colorbar()
+    plt.yticks(Y, params["target_set"], rotation=0)
+    plt.ylabel("Score `classic` (%)")
+    showTrainParams(train_params, var_name)
+    plotMinMaxScore(X, Y, minScore["classic"][2], maxScore["classic"][2], dX)
+    plt.title(f"{minScore['classic'][1]}={minScore['classic'][0]*100:.1f}%  |  {maxScore['classic'][1]}={maxScore['classic'][0]*100:.1f}%")
+
+    plt.subplot(223)
+    plt.imshow(res["norma"]*100, cmap=cmap, extent=[X[0], X[-1], X[0], X[-1]], origin='lower', vmin=0.0, vmax=vmax*100)
+    plt.colorbar()
+    plt.yticks(Y, params["target_set"], rotation=0)
+    plt.xlabel(var_name)
+    plt.ylabel("Score `norma` (%)")
+    showTrainParams(train_params, var_name)
+    plotMinMaxScore(X, Y, minScore["norma"][2], maxScore["norma"][2], dX)
+    plt.title(f"{minScore['norma'][1]}={minScore['norma'][0]*100:.1f}%  |  {maxScore['norma'][1]}={maxScore['norma'][0]*100:.1f}%")
+
+
+    # Sum axis target
+    plt.subplot(122)
+    for mode, col in [("classic", "g"), ("norma", "r")]:
+        res_var = np.mean(res[mode], axis=0)*100
+        res_var_std = np.std(res[mode], axis=0)*100
+        plt.fill_between(X, res_var, res_var+res_var_std, color=col, alpha=0.5)
+        plt.fill_between(X, res_var, res_var-res_var_std, color=col, alpha=0.5)
+        plt.plot(X, res_var, color=col, label=f"{mode} : {np.mean(res[mode])*100:.1f} $\pm$ {np.std(res[mode])*100:.1f} %")
+    showTrainParams(train_params, var_name)
+    plt.xlabel(var_name)
+    plt.ylabel(f"Score (%)")
+    plt.legend()
+    plt.title(f"Score for variation of {var_name}")
+    plt.ylim(0, vmax*100)
+    plt.savefig(f"{path4save}/metric/{var_name}.png")
+    plt.close()
+
+    for mode in ["classic", "norma"]:
+        isNorma = True if mode == "norma" else False
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, maxScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"max_{var_name}_{mode}", score_type=select_score_type)
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, maxScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"max_{var_name}_{mode}", score_type=select_score_type)
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, minScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=False, savename=f"min_{var_name}_{mode}", score_type=select_score_type)
+        makeOneSpecOldStyle(fold, select_model, path_train, select_train, minScore[mode][3], var_params, path4save=path4save, give_norma=isNorma, give_image=True, savename=f"min_{var_name}_{mode}", score_type=select_score_type)
+
+
+    return res, params["target_set"]
 
 
 
@@ -290,10 +362,6 @@ if __name__ == "__main__":
 
                                                 
     """
-
-    tradargs = {
-        "arg.0.0" : f"PSF Moffat $\gamma$",
-    }
 
 
     total_time = time()
@@ -336,7 +404,6 @@ if __name__ == "__main__":
     os.mkdir(f"{Paths.save}/metric")
     os.mkdir(f"{Paths.save}/example_spectrum")
     os.mkdir(f"{Paths.save}/example_image")
-    os.mkdir(f"{Paths.save}/residus")
 
 
 
@@ -402,7 +469,7 @@ if __name__ == "__main__":
     else:
 
         t0 = time()
-        res, var = open_fold(Args, Paths, Folds)
+        res, var = open_fold_classico(Args, Paths, Folds)
         print(time()-t0)
 
 

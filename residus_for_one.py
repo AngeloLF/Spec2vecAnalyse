@@ -39,9 +39,8 @@ if __name__ == "__main__":
 	yt = np.load(f"{pathdata}/{specfolder}/{Args.folder_output}_{Args.spec}.npy")
 	yp = np.load(f"{pathdata}/{predfolder}/{Args.folder_output}_{Args.spec}.npy")
 
-	print(yt.shape, yp.shape)
-
-	res = yt - yp / np.sqrt(yt + C**2)
+	res = (yt - yp) 
+	nor = np.sqrt(yt + C**2)
 
 	fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(20, 8), gridspec_kw={'height_ratios': [3, 1]})
 
@@ -60,9 +59,9 @@ if __name__ == "__main__":
 	ax1.legend()
 
 	ax2.axhline(0, color='k', linestyle='--', linewidth=1)
-	ax2.errorbar(x, res, yerr=1, marker='.', linestyle='', color='k', linewidth=0.5)
+	ax2.errorbar(x, res / nor, yerr=1, marker='.', linestyle='', color='k', linewidth=0.5)
 	ax2.set_xlabel(f"$\lambda$ (nm)")
-	ax2.set_ylabel("Residues")
+	ax2.set_ylabel(f"$\chi^2$")
 
 	plt.tight_layout()
 	if not Args.show:
@@ -70,3 +69,30 @@ if __name__ == "__main__":
 		plt.close()
 	else:
 		plt.show()
+
+
+	yts = np.sort(yt)
+	dmax = int(np.max(yts[1:] - yts[:-1])*2) + 1
+	nbins = int(np.max(yt) / dmax)
+
+	xbin = np.zeros(nbins)
+	resb = np.zeros(nbins)
+	ress = np.zeros(nbins)
+
+	for i in range(nbins):
+
+		resi = res[(yt > i*dmax) & (yt < (i+1)*dmax)]
+
+		xbin[i] = dmax * (0.5 + i)
+		resb[i] = np.mean(resi**2)
+		ress[i] = np.std(resi**2)
+
+
+
+	plt.plot(yt, res**2, '.k', alpha=0.5)
+	plt.errorbar(xbin, resb, yerr=ress, color="r", linestyle="", marker=".")
+	plt.xlabel(r"$y_{true}$")
+	plt.ylabel(f"$res^2$")
+	plt.show()
+
+
