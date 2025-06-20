@@ -61,7 +61,7 @@ if __name__ == "__main__":
 	ax2.axhline(0, color='k', linestyle='--', linewidth=1)
 	ax2.errorbar(x, res / nor, yerr=1, marker='.', linestyle='', color='k', linewidth=0.5)
 	ax2.set_xlabel(f"$\lambda$ (nm)")
-	ax2.set_ylabel(f"$\chi^2$")
+	ax2.set_ylabel(f"$Residus$")
 
 	plt.tight_layout()
 	if not Args.show:
