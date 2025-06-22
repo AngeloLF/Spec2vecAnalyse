@@ -60,8 +60,9 @@ def compute_score_chi2(true, pred, Csigma_chi2=12, norma=800, give_norm_array=Fa
 
 def compute_score(name, true, pred, give_norm_array=False):
 
-    if name == "L1"   : return compute_score_L1(true, pred, give_norm_array=give_norm_array)
-    if name == "chi2" : return compute_score_chi2(true, pred, give_norm_array=give_norm_array)
+    if   name == "L1"   : return compute_score_L1(true, pred, give_norm_array=give_norm_array)
+    elif name == "chi2" : return compute_score_chi2(true, pred, give_norm_array=give_norm_array)
+    else : raise Exception(f"Unknow score name {name} in analyse_test.compute_score.")
 
 
 
@@ -146,11 +147,8 @@ def makeResidus(Args, Paths, Folds, res, n, savename, C=12., gain=3.):
     ax2.set_ylabel(f"$\chi^2$")
 
     plt.tight_layout()
-    if not Args.show:
-        plt.savefig(f"{Paths.save}/residus/{savename}_residus.png")
-        plt.close()
-    else:
-        plt.show()
+    plt.savefig(f"{Paths.save}/residus/{savename}_residus.png")
+    plt.close()
 
 
     yts = np.sort(yt)
@@ -175,11 +173,8 @@ def makeResidus(Args, Paths, Folds, res, n, savename, C=12., gain=3.):
     plt.errorbar(xbin, resb, yerr=ress, color="r", linestyle="", marker=".")
     plt.xlabel(r"$y_{true}$")
     plt.ylabel(f"$res^2$")
-    if not Args.show:
-        plt.savefig(f"{Paths.save}/residus/{savename}_res2.png")
-        plt.close()
-    else:
-        plt.show()
+    plt.savefig(f"{Paths.save}/residus/{savename}_res2.png")
+    plt.close()
 
 
 
@@ -411,14 +406,62 @@ if __name__ == "__main__":
 
             if key != "TARGET":
 
-                plt.scatter(val, res["classic"]*100, c="g", label="Classic", alpha=0.6)
-                plt.scatter(val, res["norma"]*100, c="r", label="Norma", alpha=0.6)
+                yscore = np.copy(res["classic"])
+                ylabel = f"Score {Args.score}"
 
-                plt.legend()
+                if Args.score in ["L1"]: 
+                    yscore *= 100
+                    ylabel += " (%)"
+
+                argsort = np.argsort(val)
+                xs = val[argsort]
+                ys = yscore[argsort]
+                dmax = np.max(xs[1:] - xs[:-1]) * 1.01
+                nbins = int((xs[-1] - xs[0]) / dmax) + 1
+
+                if nbins > 50 or "test50bins" in sys.argv:
+                    nbins = 50
+                    dmax = (xs[-1] - xs[0]) / nbins
+
+                x0 = xs[0]
+
+                print(f"\nkey {key}")
+                print(xs)
+                print(dmax, nbins)
+
+                xbin = np.zeros(nbins)
+                ybin = np.zeros(nbins)
+                ystd = np.zeros(nbins)
+
+                for i in range(nbins):
+
+                    resi = yscore[(val > x0 + i*dmax) & (val < x0 + (i+1)*dmax)]
+
+                    xbin[i] = x0 + dmax * (0.5 + i)
+                    ybin[i] = np.mean(resi)
+                    ystd[i] = np.std(resi)
+
+
+                print(xbin)
+                print(ybin)
+
+                plt.figure(figsize=(16, 10))
+                plt.scatter(val, yscore, color='k', marker='+', alpha=0.5)
+                plt.errorbar(xbin, ybin, yerr=ystd, color="r", linestyle="", marker=".")
+                # plt.legend()
                 plt.xlabel(f"Variable {key}")
-                plt.ylabel(f"Score (%)")
-                plt.savefig(f"{Paths.save}/metric/{key}.png")
-                plt.close()
+                plt.ylabel(ylabel)
+
+                if not Args.show:
+                    plt.savefig(f"{Paths.save}/metric/{key}.png")
+                    plt.close()
+                else:
+                    plt.show()
+
+                    plt.plot(val, yscore, '+k-')
+                    plt.plot(xs, ys, "-r.")
+                    plt.show()
+                    sys.exit()
 
             else:
 
