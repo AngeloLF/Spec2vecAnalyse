@@ -11,6 +11,7 @@ from spectractor.extractor.spectrum import Spectrum
 from spectractor import parameters
 
 
+
 def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini"):
 
     testdir = f"{pathtest}/{testname}"
@@ -51,8 +52,6 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
     header['HA'] = "01:52:42.92"
 
     xt = np.arange(hp["LAMBDA_MIN"], hp["LAMBDA_MAX"], hp["LAMBDA_STEP"])
-
-
 
     for fold in ["image_fits", "spectrum_fits", pred]:
         if fold in os.listdir(testdir) : shutil.rmtree(f"{testdir}/{fold}")
