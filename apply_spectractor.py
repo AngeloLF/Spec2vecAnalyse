@@ -4,6 +4,7 @@ from astropy.io import fits
 import numpy as np
 from scipy import interpolate
 from time import time
+import coloralf as c
 
 sys.path.append("./Spectractor")
 from spectractor.extractor import extractor
@@ -12,7 +13,8 @@ from spectractor import parameters
 
 
 
-def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini", makeonly=None):
+def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini", 
+            makeonly=None, maxloop=10):
 
     testdir = f"{pathtest}/{testname}"
     pred = f"pred_Spectractor_x_x_0e+00"
@@ -57,11 +59,11 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
         if fold in os.listdir(testdir) : shutil.rmtree(f"{testdir}/{fold}")
         os.mkdir(f"{testdir}/{fold}")
 
-    times = np.zeros(len(images))
+    times = np.zeros(hs["nb_simu"])
 
-    for n in range(len(images)):
+    for n in range(hs["nb_simu"]):
 
-        if makeonly is None or makeonly == n:
+        if makeonly is None or int(makeonly) == n:
 
             header["TARGET"] = vp["TARGET"][n]
             header["AIRMASS"] = vp["ATM_AIRMASS"][n]
@@ -82,12 +84,16 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
             data[data <= 0] = min_noz
 
             bande = int((hp["SIM_NX"] - hp["SIM_NY"])/2)
-            data[bande:bande+hp["SIM_NY"], :] = np.load(images[n])[::-1, :]
+
+            if makeonly is None: 
+                data[bande:bande+hp["SIM_NY"], :] = np.load(images[n])[::-1, :]
+                true_name = images[n].split("_")[-1][:-4]
+            else: 
+                data[bande:bande+hp["SIM_NY"], :] = np.load(f"{testdir}/image/image_{makeonly}.npy")[::-1, :]
+                true_name = makeonly
 
             hdu = fits.PrimaryHDU(data=data.astype(np.float32), header=header)
             hdul = fits.HDUList([hdu])
-
-            true_name = images[n].split("_")[-1][:-4]
 
             savefile = f"{testdir}/image_fits/images_{true_name}.fits"
             hdul.writeto(savefile, overwrite=True)
@@ -95,20 +101,57 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
 
             t0 = time()
 
-            spectrum = extractor.Spectractor(savefile, f"{testdir}/spectrum_fits", guess=[64, 512], target_label=vp["TARGET"][n], disperser_label=hp["DISPERSER"], config=config)
-            spectrum.convert_from_flam_to_ADUrate()
+            if "debug" in sys.argv: 
+                parameters.DEBUG = True 
+                parameters.VERBOSE = True
+            if "verb" in sys.argv:
+                parameters.VERBOSE = True
 
-            xp = spectrum.lambdas
-            yp = spectrum.data * gain * spectrum.expo
+
             yt = np.load(f"{testdir}/spectrum/spectrum_{true_name}.npy")
-            fact = np.max(yp)/np.max(yt)
+            spectractor_ok = False
+            loop = 0
 
-            finterp = interpolate.interp1d(xp, yp, kind='linear', bounds_error=False, fill_value=0.0)
-            ypi = finterp(xt) / fact
+            while not spectractor_ok:
+
+                loop += 1
+
+                try:
+                    spectrum = extractor.Spectractor(savefile, f"{testdir}/spectrum_fits", guess=[64, 512], target_label=vp["TARGET"][n], disperser_label=hp["DISPERSER"], config=config)
+                    spectrum.convert_from_flam_to_ADUrate()
+                    xp = spectrum.lambdas
+                    yp = spectrum.data * gain * spectrum.expo
+
+                    fact = np.max(yp)/np.max(yt)
+                    yp /= fact
+
+                    finterp = interpolate.interp1d(xp, yp, kind='linear', bounds_error=False, fill_value=0.0)
+                    ypi = finterp(xt)
+                    spectractor_ok = True
+
+                except:
+                    print(f"{c.lr}WARNING : loop {loop}/{maxloop} extractor failed ...{c.d}")
+                    if loop == maxloop:
+                        spectractor_ok = True
+                        xmax = np.argmax(yt)
+                        finterp = interpolate.interp1d([xt[0], xt[xmax], xt[-1]], [0, yt[xmax], 0], kind='linear', bounds_error=False, fill_value=0.0)
+                        ypi = finterp(xt)
+                        fact = 1.0
+                        print(f"{c.r}Make mean yt ....{c.d}")
 
             times[n] = time() - t0
 
             np.save(f"{testdir}/{pred}/spectrum_{true_name}.npy", ypi)
+
+            if "show" in sys.argv:
+                plt.plot(xt, yt , c='g', label='Spectrum to predict')
+                plt.plot(xt, ypi, c='r')
+                plt.title(f"Mult : {fact}")
+                plt.legend()
+                plt.show()
+
+
+            print(f"FACT : {fact}")
 
     print(f"THE TIMES : {np.mean(times):.6f} += {np.std(times):.6f} s")
     print(f"Total : {np.sum(times):.6f} s")
@@ -116,15 +159,33 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
 
 
 
+def viewResult(test_folder, name):
+
+    print(parameters.FLAM_TO_ADURATE)
+
+    xt = np.arange(300, 1100)
+    yt = np.load(f"./results/output_simu/{test_folder}/spectrum/spectrum_{name}.npy")
+    yp = np.load(f"./results/output_simu/{test_folder}/pred_Spectractor_x_x_0e+00/spectrum_{name}.npy")
+
+    plt.plot(xt, yt , c='g', label='Spectrum to predict')
+    plt.plot(xt, yp, c='r', label='prediction')
+    plt.legend()
+    plt.show()
+
+
+
+
+
 if __name__ == "__main__":
 
     makeonly = None
+    test_folder = sys.argv[1]
 
     for arg in sys.argv[1:]:
 
-        if arg[:9] == "makeonly=" : makeonly = int(arg[9:])
+        if arg[:9] == "makeonly=" : makeonly = arg[9:]
 
 
+    if not "view" in sys.argv : openTest(test_folder, makeonly=makeonly)
+    else : viewResult(test_folder, makeonly)
 
-    test_folder = sys.argv[1]
-    openTest(test_folder, makeonly=makeonly)
