@@ -26,7 +26,7 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
     with open(f"{testdir}/{varfile}", "rb") as fpck:
         vp = pickle.load(fpck)
 
-    images = [f"{testdir}/image/{fimage}" for fimage in os.listdir(f"{testdir}/image")]
+    images = np.sort([f"{testdir}/image/{fimage}" for fimage in os.listdir(f"{testdir}/image")])
 
     gain, ron = hp["CCD_GAIN"], hs["CCD_READ_OUT_NOISE"]
     
