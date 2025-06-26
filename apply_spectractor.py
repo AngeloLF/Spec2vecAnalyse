@@ -69,9 +69,7 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
             header["AIRMASS"] = vp["ATM_AIRMASS"][n]
             header["ANGLE"] = - vp["ROTATION_ANGLE"][n]
 
-            print(f"\nMake {n}")
-            print(f"Angle : {header['ANGLE']}")
-            print(vp.keys())
+            print(f"\nMake {n}, with angle {header['ANGLE']}")
             
             data = np.zeros((hp["SIM_NX"], hp["SIM_NX"])) + hs["BACKGROUND_LEVEL"] * hs["EXPOSURE"]
 
