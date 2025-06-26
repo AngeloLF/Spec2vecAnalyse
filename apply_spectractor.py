@@ -12,7 +12,7 @@ from spectractor import parameters
 
 
 
-def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini"):
+def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini", makeonly=None):
 
     testdir = f"{pathtest}/{testname}"
     pred = f"pred_Spectractor_x_x_0e+00"
@@ -61,58 +61,70 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
 
     for n in range(len(images)):
 
-        header["TARGET"] = vp["TARGET"][n]
-        header["AIRMASS"] = vp["ATM_AIRMASS"][n]
-        header["ANGLE"] = - vp["ROTATION_ANGLE"][n]
+        if makeonly is None or makeonly == n:
 
-        print(f"Angle : {header['ANGLE']}")
-        print(vp.keys())
-        
-        data = np.zeros((hp["SIM_NX"], hp["SIM_NX"])) + hs["BACKGROUND_LEVEL"] * hs["EXPOSURE"]
+            header["TARGET"] = vp["TARGET"][n]
+            header["AIRMASS"] = vp["ATM_AIRMASS"][n]
+            header["ANGLE"] = - vp["ROTATION_ANGLE"][n]
 
-        d = np.copy(data).astype(np.float32) * gain
-        noisy = np.random.poisson(d).astype(np.float32)
-        noisy += np.random.normal(scale=hs["CCD_READ_OUT_NOISE"]*np.ones_like(noisy)).astype(np.float32)
+            print(f"\nMake {n}")
+            print(f"Angle : {header['ANGLE']}")
+            print(vp.keys())
+            
+            data = np.zeros((hp["SIM_NX"], hp["SIM_NX"])) + hs["BACKGROUND_LEVEL"] * hs["EXPOSURE"]
 
-        data = noisy / gain
-        min_noz = np.min(data[data > 0])
-        data[data <= 0] = min_noz
+            d = np.copy(data).astype(np.float32) * gain
+            noisy = np.random.poisson(d).astype(np.float32)
+            noisy += np.random.normal(scale=hs["CCD_READ_OUT_NOISE"]*np.ones_like(noisy)).astype(np.float32)
 
-        bande = int((hp["SIM_NX"] - hp["SIM_NY"])/2)
-        data[bande:bande+hp["SIM_NY"], :] = np.load(images[n])[::-1, :]
+            data = noisy / gain
+            min_noz = np.min(data[data > 0])
+            data[data <= 0] = min_noz
 
-        hdu = fits.PrimaryHDU(data=data.astype(np.float32), header=header)
-        hdul = fits.HDUList([hdu])
+            bande = int((hp["SIM_NX"] - hp["SIM_NY"])/2)
+            data[bande:bande+hp["SIM_NY"], :] = np.load(images[n])[::-1, :]
 
-        true_name = images[n].split("_")[-1][:-4]
+            hdu = fits.PrimaryHDU(data=data.astype(np.float32), header=header)
+            hdul = fits.HDUList([hdu])
 
-        savefile = f"{testdir}/image_fits/images_{true_name}.fits"
-        hdul.writeto(savefile, overwrite=True)
-        print(f"Creation of {savefile}")
+            true_name = images[n].split("_")[-1][:-4]
 
-        t0 = time()
+            savefile = f"{testdir}/image_fits/images_{true_name}.fits"
+            hdul.writeto(savefile, overwrite=True)
+            print(f"Creation of {savefile}")
 
-        spectrum = extractor.Spectractor(savefile, f"{testdir}/spectrum_fits", guess=[64, 512], target_label=vp["TARGET"][n], disperser_label=hp["DISPERSER"], config=config)
-        spectrum.convert_from_flam_to_ADUrate()
+            t0 = time()
 
-        xp = spectrum.lambdas
-        yp = spectrum.data * gain * spectrum.expo
-        yt = np.load(f"{testdir}/spectrum/spectrum_{true_name}.npy")
-        fact = np.max(yp)/np.max(yt)
+            spectrum = extractor.Spectractor(savefile, f"{testdir}/spectrum_fits", guess=[64, 512], target_label=vp["TARGET"][n], disperser_label=hp["DISPERSER"], config=config)
+            spectrum.convert_from_flam_to_ADUrate()
 
-        finterp = interpolate.interp1d(xp, yp, kind='linear', bounds_error=False, fill_value=0.0)
-        ypi = finterp(xt) / fact
+            xp = spectrum.lambdas
+            yp = spectrum.data * gain * spectrum.expo
+            yt = np.load(f"{testdir}/spectrum/spectrum_{true_name}.npy")
+            fact = np.max(yp)/np.max(yt)
 
-        times[n] = time() - t0
+            finterp = interpolate.interp1d(xp, yp, kind='linear', bounds_error=False, fill_value=0.0)
+            ypi = finterp(xt) / fact
 
-        np.save(f"{testdir}/{pred}/spectrum_{true_name}.npy", ypi)
+            times[n] = time() - t0
 
-    print(f"THE TIMES : {np.mean(times):.6f} += {np.std(times):.6f}")
+            np.save(f"{testdir}/{pred}/spectrum_{true_name}.npy", ypi)
+
+    print(f"THE TIMES : {np.mean(times):.6f} += {np.std(times):.6f} s")
+    print(f"Total : {np.sum(times):.6f} s")
 
 
 
 
 if __name__ == "__main__":
 
+    makeonly = None
+
+    for arg in sys.argv[1:]:
+
+        if arg[:9] == "makeonly=" : makeonly = int(arg[9:])
+
+
+
     test_folder = sys.argv[1]
-    openTest(test_folder)
+    openTest(test_folder, makeonly=makeonly)
