@@ -64,6 +64,8 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
         text = text[index]
         lignes = [lignes[i] for i in index]
 
+        # y[y == np.inf] = np.nan
+
         for color_palette, palette in colors.items():
 
             plt.figure(figsize=(19, 10))
@@ -90,6 +92,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
             plt.tight_layout()
             plt.yscale("log")
             plt.legend()
+            # plt.show()
             plt.savefig(f"{savefig_name}_{color_palette}.png")
             plt.close()
 
@@ -181,6 +184,8 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
         
         for m, model in enumerate(models):
 
+            print(f"{c.ly}Model {model}{c.d}")
+
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
@@ -188,11 +193,13 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
 
                 test = otest if "no0" not in model else f"{otest}no0"
 
+                print(f"{c.y}Test {otest}{c.d}")
+
                 pbar.update(1)
 
-                if f"pred_{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/pred_{model}"):
+                if f"{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/{model}"):
 
-                    with open(f"{path_analyse}/{score}/pred_{model}/{test}/resume.txt", "r") as f:
+                    with open(f"{path_analyse}/{score}/{model}/{test}/resume.txt", "r") as f:
                         data = f.read().split("\n")[:-1]
 
                     for i, line in enumerate(data):
@@ -273,7 +280,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
 
 if __name__ == "__main__":
 
-    score_type = ["L1", "chi2"]
+    score_type = ["L1"]
     path_analyse = f"./results/analyse"
     path_resume = f"{path_analyse}/all_resume"
 
