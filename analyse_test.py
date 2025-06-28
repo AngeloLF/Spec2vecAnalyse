@@ -18,23 +18,26 @@ def compute_score_L1(true, pred, sim, num_spec_str, give_norm_array=False):
 
     t = np.copy(true)
     p = np.copy(pred)
+    fact_n = np.max(t) / np.max(p)
 
     p[p < 0] = 0
     t[t < 0] = 0
 
     # non norma
-    max_pt = np.max(np.array([t, p]), axis=0)
     diff = np.abs(t-p)
     score = np.sum(diff) / np.sum(t)
 
     # norma
-    tn = t / np.max(t)
-    pn = p / np.max(p)
-    max_pt_norma = np.max(np.array([tn, pn]), axis=0)
-    diff_norma = np.abs(tn-pn)
-    score_norma = np.sum(diff_norma) / np.sum(tn)
+    pn = p * fact_n
+    diff_norma = np.abs(t-pn)
+    score_norma = np.sum(diff_norma) / np.sum(t)
 
-    if give_norm_array : return tn, pn, score, score_norma
+
+
+    # Save if needed
+
+
+    if give_norm_array : return pn, score, score_norma
     else : return score, score_norma
 
 
@@ -69,7 +72,7 @@ def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, give_nor
     chi2eq_n = residus_n**2 / (sigma_READ**2 + true_simu / gain) * np.sign(residus_n)
     score_n = np.sum(np.abs(chi2eq_n)) / N
 
-    if give_norm_array : return true, pred_n, score, score_n
+    if give_norm_array : return pred_n, score, score_n
     else : return score, score_n
 
 
@@ -87,7 +90,7 @@ def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savena
     with open(f"{Paths.test}/hparams.json", 'r') as f:
         hparams = json.load(f)
 
-    x = Args.wl # np.arange(hparams["LAMBDA_MIN"], hparams["LAMBDA_MAX"], hparams["LAMBDA_STEP"])
+    x = Args.wl
     num_spec = res["num"][n]
 
     pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
@@ -122,6 +125,45 @@ def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savena
         plt.savefig(f"{Paths.save}/example_spectrum/{savename}.png")
         plt.close()
 
+def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savename, gain=3.):
+
+    with open(f"{Paths.test}/hparams.json", 'r') as f:
+        hparams = json.load(f)
+
+    x = Args.wl
+    num_spec = res["num"][n]
+
+    pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
+    true = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
+    image = np.load(f"{Paths.test}/image/image_{num_spec}.npy")
+
+    tn, pn, s, sn = compute_score(Args.score, true, pred, give_norm_array=True)
+    if give_norma : true, pred = tn, pn
+
+    plt.figure(figsize=(16, 8))
+    if give_image : plt.subplot(211)
+
+    plt.plot(x, true, c='g', label='True')
+    plt.plot(x, pred, c='r', label='Pred')
+
+    plt.title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/gain/1000:.0f} kADU")
+    plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
+    for key, val in varp.items():
+        if key != "TARGET": 
+            skey = key if key not in tradargs.keys() else tradargs[key]
+            plt.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
+    plt.legend() 
+    plt.xlabel(f"$\lambda$ (nm)")
+    plt.ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_spec}.npy")
+    
+    if give_image:
+        plt.subplot(212)
+        plt.imshow(np.log10(image+1), cmap='gray')
+        plt.savefig(f"{Paths.save}/example_image/{savename}.png")
+        plt.close()
+    else:    
+        plt.savefig(f"{Paths.save}/example_spectrum/{savename}.png")
+        plt.close()
 
 
 def makeResidus(Args, Paths, Folds, res, n, savename, C=12., gain=3.):

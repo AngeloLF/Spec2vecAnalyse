@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 
-def recup_mt(mode="dispo"):
+def recup_mt(score, mode="dispo"):
 
 
     if mode == "dispo":
@@ -300,12 +300,11 @@ if __name__ == "__main__":
     }
 
     mode = "dispo" if "all" not in sys.argv else "all"
-    models = recup_mt(mode)
-
-    pbar = tqdm(total=nb_ft*len(models)*2)
 
     for name, test in tests.items():
 
+        models = recup_mt("L1", n mode)
+        pbar = tqdm(total=nb_ft*len(models))
         make_score(name, test, models, score_type, pbar, markers[name], colors)
 
     pbar.close()
