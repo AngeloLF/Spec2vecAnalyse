@@ -303,7 +303,7 @@ if __name__ == "__main__":
 
     for name, test in tests.items():
 
-        models = recup_mt("L1", n mode)
+        models = recup_mt("L1", mode)
         pbar = tqdm(total=nb_ft*len(models))
         make_score(name, test, models, score_type, pbar, markers[name], colors)
 
