@@ -14,7 +14,7 @@ from get_argv import get_argv
 
 
 
-def compute_score_L1(true, pred, sim, num_spec_str, give_norm_array=False):
+def compute_score_L1(true, pred, true_image, pred_image, give_norm_array=False):
 
     t = np.copy(true)
     p = np.copy(pred)
@@ -39,45 +39,29 @@ def compute_score_L1(true, pred, sim, num_spec_str, give_norm_array=False):
 
 
 
-def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, give_norm_array=False):
+def compute_score_chi2(true, pred, true_image, pred_image, Csigma_chi2=12, norma=800, give_norm_array=False):
 
-    fact_n = np.max(true) / np.max(pred)
-    pred_n = pred * fact_n
-    sigma_READ = Cread / gain
+    t = np.copy(true)
+    p = np.copy(pred)
 
-    true_simu = np.load(f"{paths.test}/image/image_{num_spec_str}.npy")
-    pred_simu,   _, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred,   with_noise=False)
-    pred_simu_n, _, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred_n, with_noise=False)
-    arg_timbre = [int(np.round(np.max(f_arg(sim.lambdas, *arg)))) for f_arg, arg in zip(sim.psf_function['f_arg'], sim.psf_function['arg'])]
-    timbre_size = sim.psf_function['timbre'](*arg_timbre)
+    p[p < 0] = 0
+    t[t < 0] = 0
 
-    mask = np.zeros_like(true_simu)
-    for xi, yi in zip(xc, yc):
-        mask[int(max(0, yi-timbre_size)):int(min(true_simu.shape[0], yi+timbre_size)), int(max(0, xi-timbre_size)):int(min(true_simu.shape[1], xi+timbre_size))] = 1
-    true_simu[~(mask == 1)] = 0
-    pred_simu[~(mask == 1)] = 0
-    pred_simu_n[~(mask == 1)] = 0
-    N = np.sum(mask)
-
-    # non-norma
-    residus = true_simu - pred_simu
-    chi2eq = residus**2 / (sigma_READ**2 + true_simu / gain) * np.sign(residus)
-    score = np.sum(np.abs(chi2eq)) / N
+    # non norma
+    chi2 = np.sum((true - pred)**2 / (true + Csigma_chi2**2)) / norma
 
     # norma
-    residus_n = true_simu - pred_simu_n
-    chi2eq_n = residus_n**2 / (sigma_READ**2 + true_simu / gain) * np.sign(residus_n)
-    score_n = np.sum(np.abs(chi2eq_n)) / N
+    norma = np.sum((true - pred)**2 / (true + 1.**2)) / norma
 
-    if give_norm_array : return true, pred_n, score, score_n
-    else : return score, score_n
+    if give_norm_array : return true, pred, chi2, norma
+    else : return chi2, norma
 
 
 
-def compute_score(name, true, pred, sim, num_spec_str, give_norm_array=False):
+def compute_score(name, true, pred, give_norm_array=False):
 
-    if   name == "L1"   : return compute_score_L1(true, pred, sim, num_spec_str, give_norm_array=give_norm_array)
-    elif name == "chi2" : return compute_score_chi2(true, pred, sim, num_spec_str, give_norm_array=give_norm_array)
+    if   name == "L1"   : return compute_score_L1(true, pred, give_norm_array=give_norm_array)
+    elif name == "chi2" : return compute_score_chi2(true, pred, give_norm_array=give_norm_array)
     else : raise Exception(f"Unknow score name {name} in analyse_test.compute_score.")
 
 
@@ -210,11 +194,8 @@ def open_fold(args, paths, folds, nb_level=10):
     with open(f"{paths.test}/hist_params.json", 'r') as f:
         params = json.load(f)
 
-    with open(f"{paths.test}/hparams.json", "r") as f:
-        hp = json.load(fjson)
-
     with open(f"{paths.test}/variable_params.pck", "rb") as f:
-        vp = pickle.load(f)
+        var_params = pickle.load(f)
 
     res = {"classic" : np.zeros(params["nb_simu"]),
            "norma"   : np.zeros(params["nb_simu"]),
@@ -222,50 +203,25 @@ def open_fold(args, paths, folds, nb_level=10):
            "file"    : np.zeros(params["nb_simu"]).astype(str),
            "num"     : np.zeros(params["nb_simu"]).astype(str)}
 
-
-
-    # Initialise simulator
-    psf_function = {
-        'f' : pf.moffat2d_jit,
-        'f_arg' : [pf.simpleLinear, pf.simpleLinear],
-        'arg' : [[3.0], [3.0]],
-        'order0' : {'amplitude':22900.0, 'arg':[3.0, 2.0]},
-        'timbre' : pf.moffat2d_timbre,
-    }
-
-    sim = SpecSimulator(psf_function=psf_function, savingFolders=False, target_set="setAll")
-    
-
-
     # loading of each spectrum
     for i, file in enumerate(files):
 
         num_spec_str = file.split("_")[-1][:-4]
 
-        # set simulator
-        n = int(num_spec_str)
-        for param in vp.keys():
-            if param[:4] != "arg.": 
-                sim.__setattr__(param, vp[param][n])
-            else:
-                sim.psf_function['arg'][0][0] = vp[param][n]
-
         pred = np.load(f"{paths.test}/{folds.pred_folder}/{file}")
         true = np.load(f"{paths.test}/{Args.folder_output}/{file}")
 
-        res["flux"][i] = np.sum(pred) / hp["CCD_GAIN"] # e- / (e-/ADU) = flux in ADU
+        res["flux"][i] = np.sum(true) # flux in adu ~
 
-        score, score_norma = compute_score(Args.score, true, pred, sim, num_spec_str)
+        score, score_norma = compute_score(Args.score, true, pred)
         res["classic"][i] = score
         res["norma"][i] = score_norma
         res["file"][i] = file
         res["num"][i] = num_spec_str
 
-
-
-    # FIGURE flux2score
     plt.figure(figsize=(12, 8))
     for mode, col in [("classic", "g"), ("norma", "r")]:
+        
         plt.plot(res["flux"], res[mode]*100, color=col, label=mode, linestyle="", marker=".", alpha=0.7)
     plt.xlabel("Flux (en ADU)")
     plt.ylabel(f"Score (%)")
@@ -276,22 +232,20 @@ def open_fold(args, paths, folds, nb_level=10):
 
 
 
-    # 10 exemple of scores
     for mode in ["classic", "norma"]:
-
         isNorma = True if mode == "norma" else False
 
         for i, level in enumerate(np.linspace(np.min(res[mode]), np.max(res[mode]), nb_level)):
 
             near = np.argmin(np.abs(res[mode]-level))
-            makeOneSpec(args, paths, folds, res, vp, near, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}")
-            makeOneSpec(args, paths, folds, res, vp, near, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}")
+            makeOneSpec(args, paths, folds, res, var_params, near, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}")
+            makeOneSpec(args, paths, folds, res, var_params, near, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}")
             if mode == "classic" : makeResidus(args, paths, folds, res, near, savename=f"Level{i}_{mode}")
 
 
 
 
-    return res, vp
+    return res, var_params
 
 
 
@@ -381,120 +335,186 @@ if __name__ == "__main__":
 
 
 
-    res, var = open_fold(Args, Paths, Folds)
+    if Args.test == "output_test":
 
+        sub_folds = [f"{path_test}/{Args.test}/{sf}" for sf in os.listdir(f"{path_test}/{Args.test}") if "test" in sf]
+        nsub = len(sub_folds)
 
+        all_res = {"classic":None, "norma":None}
 
-    for key, val in var.items():
+        for j, sub_fold in enumerate(sub_folds):
 
-        if key != "TARGET":
+            print(f"{c.lg}Make {sub_fold} [{j+1}/{nsub}] ...{c.d}")
+            new_res, targets_labels = open_fold(fold=sub_fold, pred_folder=pred_folder, path4save=path4save, train_params=train_params, 
+                select_model=select_model, select_train=select_train, path_train=path_train, score_type=select_score_type)
 
-            yscore = np.copy(res["classic"])
-            ylabel = f"Score {Args.score}"
-
-            if Args.score in ["L1"]: 
-                yscore *= 100
-                ylabel += " (%)"
-
-            argsort = np.argsort(val)
-            xs = val[argsort]
-            ys = yscore[argsort]
-            dmax = np.max(xs[1:] - xs[:-1]) * 1.01
-            nbins = int((xs[-1] - xs[0]) / dmax) + 1
-
-            if nbins > 50 or "test50bins" in sys.argv:
-                nbins = 50
-                dmax = (xs[-1] - xs[0]) / nbins
-
-            x0 = xs[0]
-
-            print(f"\nkey {key}")
-            print(xs)
-            print(dmax, nbins)
-
-            xbin = np.zeros(nbins)
-            ybin = np.zeros(nbins)
-            ystd = np.zeros(nbins)
-
-            for i in range(nbins):
-
-                resi = yscore[(val > x0 + i*dmax) & (val < x0 + (i+1)*dmax)]
-
-                xbin[i] = x0 + dmax * (0.5 + i)
-                ybin[i] = np.mean(resi)
-                ystd[i] = np.std(resi)
-
-
-            print(xbin)
-            print(ybin)
-
-            plt.figure(figsize=(16, 10))
-            plt.scatter(val, yscore, color='k', marker='+', alpha=0.5)
-            plt.errorbar(xbin, ybin, yerr=ystd, color="r", linestyle="", marker=".")
-            # plt.legend()
-            plt.xlabel(f"Variable {key}")
-            plt.ylabel(ylabel)
-
-            if not Args.show:
-                plt.savefig(f"{Paths.save}/metric/{key}.png")
-                plt.close()
+            if j == 0: 
+                all_res = new_res
             else:
-                plt.show()
-
-                plt.plot(val, yscore, '+k-')
-                plt.plot(xs, ys, "-r.")
-                plt.show()
-                sys.exit()
-
-        else:
-
-            targets_labels = list(set(val))
-            ntarget = len(targets_labels)
-
-            targets_mean = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
-            targets_std = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
-            targets_min = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
-            targets_max = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
-
-            for i, target in enumerate(targets_labels):
-
-                for mode in ["norma", "classic"]:
-
-                    y = res[mode][val == target]
-                    targets_mean[mode][i] = np.mean(y)
-                    targets_std[mode][i] = np.std(y)
-                    targets_min[mode][i] = np.min(y)
-                    targets_max[mode][i] = np.max(y)
-
-            # Score for each targets
-            plt.figure(figsize=(16, 8))
-            x_positions = np.arange(len(targets_labels))
-            for mode, col, dx in [("classic", "g", -0.15), ("norma", "r", 0.15)]:
-
-                ymin = (targets_mean[mode] + targets_std[mode]) - targets_min[mode]
-                ymax = targets_max[mode] - (targets_mean[mode] + targets_std[mode])
-                ymax[ymax < 0] = 0.0
-                
-                plt.bar(x_positions+dx, 2*targets_std[mode], bottom=targets_mean[mode]-targets_std[mode], yerr=[ymin, ymax], capsize=5, alpha=0.7, color=col, width=0.3)
-                plt.errorbar(x_positions+dx, targets_mean[mode], color='k', linestyle='', marker='.')
+                for mode in all_res.keys():
+                    all_res[mode] = new_res[mode] if all_res[mode] is None else np.hstack((all_res[mode], new_res[mode]))
 
 
-            plt.xlabel("Targets")
-            plt.ylabel("Scores")
-            plt.title(f"Score for each traget in {Args.test}")
-            plt.xticks(x_positions, targets_labels, rotation=90)
-            plt.grid(axis='y', linestyle='--')
-            plt.ylim(0)
-            plt.tight_layout()
-            plt.savefig(f"{Paths.save}/for_target.png")
-            plt.close()
+        # Score for each targets
+        plt.figure(figsize=(16, 8))
+        x_positions = np.arange(len(targets_labels))
+        for mode, col, dx in [("classic", "g", -0.15), ("norma", "r", 0.15)]:
+            targets_mean = np.mean(all_res[mode], axis=1)
+            targets_std = np.std(all_res[mode], axis=1)
+
+            targets_min = np.min(all_res[mode], axis=1)
+            targets_max = np.max(all_res[mode], axis=1)
+
+            ymin = (targets_mean + targets_std) - targets_min
+            ymax = targets_max - (targets_mean + targets_std)
+            ymax[ymax < 0] = 0.0
+            
+            plt.bar(x_positions+dx, 2*targets_std, bottom=targets_mean-targets_std, yerr=[ymin, ymax], capsize=5, alpha=0.7, color=col, width=0.3)
+            plt.errorbar(x_positions+dx, targets_mean, color='k', linestyle='', marker='.')
+
+
+        plt.xlabel("Targets")
+        plt.ylabel("Scores")
+        plt.title(f"Score for each traget in {Args.test}")
+        plt.xticks(x_positions, targets_labels, rotation=90)
+        plt.grid(axis='y', linestyle='--')
+        plt.ylim(0, 1)
+        plt.tight_layout()
+        plt.savefig(f"{path4save}/for_target.png")
+        plt.close()
+        # plt.show()
+
+        with open(f"{path4save}/resume.txt", "w") as f:
+
+            for mode in ["classic", "norma"]:
+
+                f.write(f"For the `{mode}` calcul : {np.mean(all_res[mode])*100:.2f} ~ {np.std(all_res[mode])*100:.2f} %\n")
 
 
 
 
 
-    with open(f"{Paths.save}/resume.txt", "w") as f:
+    else:
 
-        for mode in ["classic", "norma"]:
+        t0 = time()
+        res, var = open_fold(Args, Paths, Folds)
+        print(time()-t0)
 
-            f.write(f"{mode}={np.mean(res[mode])}~{np.std(res[mode])}\n")
+
+
+        for key, val in var.items():
+
+            if key != "TARGET":
+
+                yscore = np.copy(res["classic"])
+                ylabel = f"Score {Args.score}"
+
+                if Args.score in ["L1"]: 
+                    yscore *= 100
+                    ylabel += " (%)"
+
+                argsort = np.argsort(val)
+                xs = val[argsort]
+                ys = yscore[argsort]
+                dmax = np.max(xs[1:] - xs[:-1]) * 1.01
+                nbins = int((xs[-1] - xs[0]) / dmax) + 1
+
+                if nbins > 50 or "test50bins" in sys.argv:
+                    nbins = 50
+                    dmax = (xs[-1] - xs[0]) / nbins
+
+                x0 = xs[0]
+
+                print(f"\nkey {key}")
+                print(xs)
+                print(dmax, nbins)
+
+                xbin = np.zeros(nbins)
+                ybin = np.zeros(nbins)
+                ystd = np.zeros(nbins)
+
+                for i in range(nbins):
+
+                    resi = yscore[(val > x0 + i*dmax) & (val < x0 + (i+1)*dmax)]
+
+                    xbin[i] = x0 + dmax * (0.5 + i)
+                    ybin[i] = np.mean(resi)
+                    ystd[i] = np.std(resi)
+
+
+                print(xbin)
+                print(ybin)
+
+                plt.figure(figsize=(16, 10))
+                plt.scatter(val, yscore, color='k', marker='+', alpha=0.5)
+                plt.errorbar(xbin, ybin, yerr=ystd, color="r", linestyle="", marker=".")
+                # plt.legend()
+                plt.xlabel(f"Variable {key}")
+                plt.ylabel(ylabel)
+
+                if not Args.show:
+                    plt.savefig(f"{Paths.save}/metric/{key}.png")
+                    plt.close()
+                else:
+                    plt.show()
+
+                    plt.plot(val, yscore, '+k-')
+                    plt.plot(xs, ys, "-r.")
+                    plt.show()
+                    sys.exit()
+
+            else:
+
+                targets_labels = list(set(val))
+                ntarget = len(targets_labels)
+
+                targets_mean = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+                targets_std = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+                targets_min = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+                targets_max = {"norma":np.zeros(ntarget), "classic":np.zeros(ntarget)}
+
+                for i, target in enumerate(targets_labels):
+
+                    for mode in ["norma", "classic"]:
+
+                        y = res[mode][val == target]
+                        targets_mean[mode][i] = np.mean(y)
+                        targets_std[mode][i] = np.std(y)
+                        targets_min[mode][i] = np.min(y)
+                        targets_max[mode][i] = np.max(y)
+
+                # Score for each targets
+                plt.figure(figsize=(16, 8))
+                x_positions = np.arange(len(targets_labels))
+                for mode, col, dx in [("classic", "g", -0.15), ("norma", "r", 0.15)]:
+
+                    ymin = (targets_mean[mode] + targets_std[mode]) - targets_min[mode]
+                    ymax = targets_max[mode] - (targets_mean[mode] + targets_std[mode])
+                    ymax[ymax < 0] = 0.0
+                    
+                    plt.bar(x_positions+dx, 2*targets_std[mode], bottom=targets_mean[mode]-targets_std[mode], yerr=[ymin, ymax], capsize=5, alpha=0.7, color=col, width=0.3)
+                    plt.errorbar(x_positions+dx, targets_mean[mode], color='k', linestyle='', marker='.')
+
+
+                plt.xlabel("Targets")
+                plt.ylabel("Scores")
+                plt.title(f"Score for each traget in {Args.test}")
+                plt.xticks(x_positions, targets_labels, rotation=90)
+                plt.grid(axis='y', linestyle='--')
+                plt.ylim(0)
+                plt.tight_layout()
+                plt.savefig(f"{Paths.save}/for_target.png")
+                plt.close()
+
+
+
+
+
+        with open(f"{Paths.save}/resume.txt", "w") as f:
+
+            for mode in ["classic", "norma"]:
+
+                f.write(f"{mode}={np.mean(res[mode])}~{np.std(res[mode])}\n")
+
+
+    print(f"All time : {time()-total_time}")
