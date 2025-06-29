@@ -556,7 +556,7 @@ if __name__ == "__main__":
             plt.title(f"Score for each traget in {Args.test}")
             plt.xticks(x_positions, targets_labels, rotation=90)
             plt.grid(axis='y', linestyle='--')
-            plt.ylim(0)
+            # plt.ylim(0)
             plt.tight_layout()
             plt.savefig(f"{Paths.save}/for_target.png")
             plt.close()
