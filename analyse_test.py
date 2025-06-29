@@ -96,8 +96,6 @@ def compute_score(name, true, pred, sim, num_spec_str):
 def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
 
     n = int(num_str)
-    
-    print(sim.ROTATION_ANGLE)
 
     # compute score
     result = compute_score(Args.score, true, pred, sim, num_str)
@@ -117,7 +115,7 @@ def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
     # PLOT "RES"
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(16, 8), gridspec_kw={'height_ratios': [3, 1]})
     plt.suptitle(fulltitle)
-    plot_spec(ax1, true, pred, varp, n)
+    plot_spec(ax1, true, pred, varp, num_str)
     plot_res(ax2, true, pred)
     plt.savefig(f"{Paths.save}/figure_res/{savename}.png")
     plt.close()
@@ -126,7 +124,7 @@ def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
     # PLOT "res_norma"
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(16, 8), gridspec_kw={'height_ratios': [3, 1]})
     plt.suptitle(fulltitle)
-    plot_spec(ax1, true, pred, varp, n)
+    plot_spec(ax1, true, pred, varp, num_str)
     plot_res(ax2, true, pred, norma=True)
     plt.savefig(f"{Paths.save}/figure_res_norma/{savename}.png")
     plt.close()
@@ -135,7 +133,7 @@ def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
     # PLOT "IMAGE"
     fig, (ax1, ax2) = plt.subplots(2, 1, sharex=False, figsize=(16, 8), gridspec_kw={'height_ratios': [1, 1]})
     plt.suptitle(fulltitle)
-    plot_spec(ax1, true, pred, varp, n)
+    plot_spec(ax1, true, pred, varp, num_str)
     plot_image(ax2, true_image)
     plt.savefig(f"{Paths.save}/figure_image/{savename}.png")
     plt.close()
@@ -170,7 +168,7 @@ def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
     ax1, ax2, ax3, ax4, ax5 = plt.subplot(gs1[0]), plt.subplot(gs1[1]), plt.subplot(gs2[0]), plt.subplot(gs2[1]), plt.subplot(gs2[2])
     plt.suptitle(fulltitle)
 
-    plot_spec(ax1, true, pred, varp, n)
+    plot_spec(ax1, true, pred, varp, num_str)
     plot_res(ax2, true, pred)
 
     plot_image(ax3, true_image)
@@ -244,7 +242,7 @@ def plot_chi2eq(ax, chi2eq):
 
 
 
-def open_fold(args, paths, folds, nb_level=3):
+def open_fold(args, paths, folds, nb_level=5):
 
     """
     dict res : 
@@ -264,11 +262,11 @@ def open_fold(args, paths, folds, nb_level=3):
     with open(f"{paths.test}/variable_params.pck", "rb") as f:
         vp = pickle.load(f)
 
-    res = {"classic" : np.zeros(params["nb_simu"]),
-           "norma"   : np.zeros(params["nb_simu"]),
+    res = {"classic" : np.zeros(params["nb_simu"]) * np.nan,
+           "norma"   : np.zeros(params["nb_simu"]) * np.nan,
            "flux"    : np.zeros(params["nb_simu"]),
            "file"    : np.zeros(params["nb_simu"]).astype(str),
-           "num"     : np.zeros(params["nb_simu"]).astype(str)}
+           "num"     : (np.zeros(params["nb_simu"]) * np.nan).astype(str)}
 
 
 
@@ -305,8 +303,6 @@ def open_fold(args, paths, folds, nb_level=3):
 
         result = compute_score(Args.score, true, pred, sim, num_spec_str)
 
-        print(result['score'], result['score_norma'])
-
         res["classic"][i] = result['score']
         res["norma"][i] = result['score_norma']
         res["file"][i] = file
@@ -332,8 +328,6 @@ def open_fold(args, paths, folds, nb_level=3):
     # 10 exemple of scores
     for mode in ["classic", "norma"]:
 
-        print(f"res mode {mode}: ", res[mode])
-
         isNorma = True if mode == "norma" else False
 
         RESMIN = np.min(res[mode][~np.isnan(res[mode])])
@@ -345,8 +339,7 @@ def open_fold(args, paths, folds, nb_level=3):
 
             near = np.argmin(np.abs(true_levels-level))
             num_spec = res["num"][near]
-
-            print(level, num_spec)
+            n = int(num_spec)
 
             pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
             true = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
@@ -354,13 +347,11 @@ def open_fold(args, paths, folds, nb_level=3):
             # set sim
             for param in vp.keys():
                 if param[:4] != "arg.": 
-                    sim.__setattr__(param, vp[param][near])
+                    sim.__setattr__(param, vp[param][n])
                 else:
-                    sim.psf_function['arg'][0][0] = vp[param][near]
+                    sim.psf_function['arg'][0][0] = vp[param][n]
 
             makeOneSpec(true, pred, sim, vp, num_spec, give_norma=isNorma, savename=f"Level{i}_{mode}")
-            # makeOneSpec(true, pred, sim, vp, num_spec, give_norma=True, savename=f"Level{i}_{mode}")
-
 
 
 
@@ -392,7 +383,7 @@ def plot_full_legend(ax, varp, n):
 
     ax.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
     for key, val in varp.items():
-        if key != "TARGET": 
+        if key != "TARGET":
             skey = key if key not in tradargs.keys() else tradargs[key]
             ax.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
 
