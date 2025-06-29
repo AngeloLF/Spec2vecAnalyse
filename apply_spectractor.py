@@ -14,7 +14,7 @@ from spectractor import parameters
 
 
 def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini", 
-            makeonly=None, maxloop=5):
+            makeonly=None, maxloop=2):
 
     testdir = f"{pathtest}/{testname}"
     pred = f"pred_Spectractor_x_x_0e+00"
@@ -131,9 +131,7 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
                     print(f"{c.lr}WARNING : loop {loop}/{maxloop} extractor failed ...{c.d}")
                     if loop == maxloop:
                         spectractor_ok = True
-                        xmax = np.argmax(yt)
-                        finterp = interpolate.interp1d([xt[0], xt[xmax], xt[-1]], [0, yt[xmax], 0], kind='linear', bounds_error=False, fill_value=0.0)
-                        ypi = finterp(xt)
+                        ypi = np.zeros_like(xt) * np.nan
                         fact = 1.0
                         print(f"{c.r}Make mean yt ....{c.d}")
 

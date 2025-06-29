@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 
 import os, sys, pickle, json, shutil
 import coloralf as c
@@ -11,10 +12,14 @@ from tqdm import tqdm
 sys.path.append('./Spec2vecModels/')
 from get_argv import get_argv
 
+sys.path.append(f"./SpecSimulator")
+from simulator import SpecSimulator
+import utils_spec.psf_func as pf
 
 
 
-def compute_score_L1(true, pred, sim, num_spec_str, give_norm_array=False):
+
+def compute_score_L1(true, pred, sim, num_spec_str):
 
     t = np.copy(true)
     p = np.copy(pred)
@@ -32,23 +37,20 @@ def compute_score_L1(true, pred, sim, num_spec_str, give_norm_array=False):
     diff_norma = np.abs(t-pn)
     score_norma = np.sum(diff_norma) / np.sum(t)
 
-
-
     # Save if needed
+    return {'score' : score, 
+            'score_norma' : score_norma,
+            'fact' : fact_n}
 
 
-    if give_norm_array : return pn, score, score_norma
-    else : return score, score_norma
 
-
-
-def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, give_norm_array=False):
+def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3):
 
     fact_n = np.max(true) / np.max(pred)
     pred_n = pred * fact_n
     sigma_READ = Cread / gain
 
-    true_simu = np.load(f"{paths.test}/image/image_{num_spec_str}.npy")
+    true_simu = np.load(f"{Paths.test}/image/image_{num_spec_str}.npy")
     pred_simu,   _, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred,   with_noise=False)
     pred_simu_n, _, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred_n, with_noise=False)
     arg_timbre = [int(np.round(np.max(f_arg(sim.lambdas, *arg)))) for f_arg, arg in zip(sim.psf_function['f_arg'], sim.psf_function['arg'])]
@@ -72,173 +74,153 @@ def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, give_nor
     chi2eq_n = residus_n**2 / (sigma_READ**2 + true_simu / gain) * np.sign(residus_n)
     score_n = np.sum(np.abs(chi2eq_n)) / N
 
-    if give_norm_array : return pred_n, score, score_n
-    else : return score, score_n
+    return {'score' : score,
+            'score_norma' : score_n,
+            'fact' : fact_n,
+            'image' : true_simu, 
+            'residus' : [residus, residus_n],
+            'chi2eq' : [chi2eq, chi2eq_n]}
 
 
 
-def compute_score(name, true, pred, sim, num_spec_str, give_norm_array=False):
+def compute_score(name, true, pred, sim, num_spec_str):
 
-    if   name == "L1"   : return compute_score_L1(true, pred, sim, num_spec_str, give_norm_array=give_norm_array)
-    elif name == "chi2" : return compute_score_chi2(true, pred, sim, num_spec_str, give_norm_array=give_norm_array)
+    if   name == "L1"   : return compute_score_L1(true, pred, sim, num_spec_str)
+    elif name == "chi2" : return compute_score_chi2(true, pred, sim, num_spec_str)
     else : raise Exception(f"Unknow score name {name} in analyse_test.compute_score.")
 
+ 
 
 
-def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savename, gain=3.):
 
-    with open(f"{Paths.test}/hparams.json", 'r') as f:
-        hparams = json.load(f)
+def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
 
-    x = Args.wl
-    num_spec = res["num"][n]
-
-    pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
-    true = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
-    image = np.load(f"{Paths.test}/image/image_{num_spec}.npy")
-
-    tn, pn, s, sn = compute_score(Args.score, true, pred, give_norm_array=True)
-    if give_norma : true, pred = tn, pn
-
-    plt.figure(figsize=(16, 8))
-    if give_image : plt.subplot(211)
-
-    plt.plot(x, true, c='g', label='True')
-    plt.plot(x, pred, c='r', label='Pred')
-
-    plt.title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/gain/1000:.0f} kADU")
-    plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
-    for key, val in varp.items():
-        if key != "TARGET": 
-            skey = key if key not in tradargs.keys() else tradargs[key]
-            plt.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
-    plt.legend() 
-    plt.xlabel(f"$\lambda$ (nm)")
-    plt.ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_spec}.npy")
+    n = int(num_str)
     
-    if give_image:
-        plt.subplot(212)
-        plt.imshow(np.log10(image+1), cmap='gray')
-        plt.savefig(f"{Paths.save}/example_image/{savename}.png")
-        plt.close()
-    else:    
-        plt.savefig(f"{Paths.save}/example_spectrum/{savename}.png")
-        plt.close()
+    print(sim.ROTATION_ANGLE)
 
-def makeOneSpec(Args, Paths, Folds, res, varp, n, give_norma, give_image, savename, gain=3.):
+    # compute score
+    result = compute_score(Args.score, true, pred, sim, num_str)
+    resultChi2 = compute_score("chi2", true, pred, sim, num_str)
+    s, sn = result["score"], result["score_norma"]
+    if give_norma : pred *= result["fact"]
+    true_image = np.load(f"{Paths.test}/image/image_{num_str}.npy")
 
-    with open(f"{Paths.test}/hparams.json", 'r') as f:
-        hparams = json.load(f)
+    # Make subtitle
+    pre_title = f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str}"
+    if Args.score in ["L1"] : title_score = f"{s*100:.1f} % [non norma] | {sn*100:.1f} % [norma]"
+    else : title_score = f"{s:.6f} [non norma] | {sn:.6f} [norma]"
+    post_title = f"Flux : {np.sum(true) / gain /1000:.0f} kADU" # e- / (e-/ADU) = flux in ADU
+    fulltitle = f"{pre_title}, {Args.score} : {title_score} | {post_title}"
+         
 
-    x = Args.wl
-    num_spec = res["num"][n]
-
-    pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
-    true = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
-    image = np.load(f"{Paths.test}/image/image_{num_spec}.npy")
-
-    tn, pn, s, sn = compute_score(Args.score, true, pred, give_norm_array=True)
-    if give_norma : true, pred = tn, pn
-
-    plt.figure(figsize=(16, 8))
-    if give_image : plt.subplot(211)
-
-    plt.plot(x, true, c='g', label='True')
-    plt.plot(x, pred, c='r', label='Pred')
-
-    plt.title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} : {s*100:.1f} % [non norma] | {sn*100:.1f} % [norma] | Flux : {res['flux'][n]/gain/1000:.0f} kADU")
-    plt.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
-    for key, val in varp.items():
-        if key != "TARGET": 
-            skey = key if key not in tradargs.keys() else tradargs[key]
-            plt.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
-    plt.legend() 
-    plt.xlabel(f"$\lambda$ (nm)")
-    plt.ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_spec}.npy")
-    
-    if give_image:
-        plt.subplot(212)
-        plt.imshow(np.log10(image+1), cmap='gray')
-        plt.savefig(f"{Paths.save}/example_image/{savename}.png")
-        plt.close()
-    else:    
-        plt.savefig(f"{Paths.save}/example_spectrum/{savename}.png")
-        plt.close()
-
-
-def makeResidus(Args, Paths, Folds, res, n, savename, C=12., gain=3.):
-
-    with open(f"{Paths.test}/variable_params.pck", "rb") as f:
-        varp = pickle.load(f)
-
-    num_spec = res["num"][n]
-    n = int(num_spec)
-
-
-    x = Args.wl
-
-    yt = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
-    yp = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
-
-    residu = (yt - yp) 
-    nor = np.sqrt(yt + C**2)
-
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(20, 8), gridspec_kw={'height_ratios': [3, 1]})
-
-    ax1.set_title(f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str} | Flux : {np.sum(yt)/gain/1000:.0f} kADU")
-
-    ax1.plot(x, yt, label='Spectrum to predict', color="g")
-    ax1.plot(x, yp, label='Model prediction', color="r")
-
-    ax1.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
-    for key, val in varp.items():
-        if key != "TARGET": 
-            skey = key if key not in tradargs.keys() else tradargs[key]
-            ax1.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
-
-    ax1.set_ylabel(f"{Args.test}/*/spectrum_{num_spec}.npy")
-    ax1.legend()
-
-    ax2.axhline(0, color='k', linestyle='--', linewidth=1)
-    ax2.errorbar(x, residu / nor, yerr=1, marker='.', linestyle='', color='k', linewidth=0.5)
-    ax2.set_xlabel(f"$\lambda$ (nm)")
-    ax2.set_ylabel(f"$\chi^2$")
-
-    plt.tight_layout()
-    plt.savefig(f"{Paths.save}/residus/{savename}_residus.png")
+    # PLOT "RES"
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(16, 8), gridspec_kw={'height_ratios': [3, 1]})
+    plt.suptitle(fulltitle)
+    plot_spec(ax1, true, pred, varp, n)
+    plot_res(ax2, true, pred)
+    plt.savefig(f"{Paths.save}/figure_res/{savename}.png")
     plt.close()
 
 
-    yts = np.sort(yt)
-    dmax = int(np.max(yts[1:] - yts[:-1])*2) + 1
-    nbins = int(np.max(yt) / dmax)
-
-    xbin = np.zeros(nbins)
-    resb = np.zeros(nbins)
-    ress = np.zeros(nbins)
-
-    for i in range(nbins):
-
-        resi = residu[(yt > i*dmax) & (yt < (i+1)*dmax)]
-
-        xbin[i] = dmax * (0.5 + i)
-        resb[i] = np.mean(resi**2)
-        ress[i] = np.std(resi**2)
+    # PLOT "res_norma"
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(16, 8), gridspec_kw={'height_ratios': [3, 1]})
+    plt.suptitle(fulltitle)
+    plot_spec(ax1, true, pred, varp, n)
+    plot_res(ax2, true, pred, norma=True)
+    plt.savefig(f"{Paths.save}/figure_res_norma/{savename}.png")
+    plt.close()
 
 
-    plt.figure(figsize=(16, 10))
-    plt.plot(yt, residu**2, '.k', alpha=0.5)
-    plt.errorbar(xbin, resb, yerr=ress, color="r", linestyle="", marker=".")
-    plt.xlabel(r"$y_{true}$")
-    plt.ylabel(f"$res^2$")
-    plt.savefig(f"{Paths.save}/residus/{savename}_res2.png")
+    # PLOT "IMAGE"
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=False, figsize=(16, 8), gridspec_kw={'height_ratios': [1, 1]})
+    plt.suptitle(fulltitle)
+    plot_spec(ax1, true, pred, varp, n)
+    plot_image(ax2, true_image)
+    plt.savefig(f"{Paths.save}/figure_image/{savename}.png")
+    plt.close()
+
+
+    # PLOT "chi2eq"
+    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=False, figsize=(16, 8), gridspec_kw={'height_ratios': [1, 1]})
+    plt.suptitle(fulltitle)
+    plot_res2d(ax1, resultChi2['residus'][give_norma])
+    plot_chi2eq(ax2, resultChi2['chi2eq'][give_norma])
+    plt.savefig(f"{Paths.save}/figure_chi2eq/{savename}.png")
+    plt.close()
+
+
+    # PLOT "full"
+    fig = plt.figure(figsize=(20, 8))
+    outer = gridspec.GridSpec(1, 2, width_ratios=[1, 2])
+    gs1 = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[0], height_ratios=[3, 1])
+    gs2 = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[1])
+    ax1, ax2, ax3, ax4 = plt.subplot(gs1[0]), plt.subplot(gs1[1]), plt.subplot(gs2[0]), plt.subplot(gs2[1])
+    plt.suptitle(fulltitle)
+    plot_spec(ax1, true, pred, varp, n)
+    plot_res(ax2, true, pred)
+    plot_image(ax3, true_image)
+    plot_chi2eq(ax4, resultChi2['chi2eq'][give_norma])
+    plt.savefig(f"{Paths.save}/figure_full/{savename}.png")
     plt.close()
 
 
 
+def plot_spec(ax, yt, yp, varp, num_str):
+
+    x = Args.wl
+    n = int(num_str)
+
+    ax.plot(x, yt, c='g', label='True')
+    ax.plot(x, yp, c='r', label='Pred')
+    plot_full_legend(ax, varp, n)
+    ax.legend()
+    ax.set_xlabel(f"$\lambda$ (nm)")
+    ax.set_ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_str}.npy")
+
+def plot_res(ax, yt, yp, norma=False):
+
+    x = Args.wl
+    res = yt - yp
+    vmaxs = np.max([yt, yp, np.ones_like(yt)], axis=0)
+    
+    if norma : res /= vmaxs
+    ylabel = "Residus" if not norma else "Residus (norma)"
+
+    ax.axhline(0, color='k', linestyle=':')
+    ax.plot(x, res, '.k')
+    ax.set_xlabel(f"$\lambda$ (nm)")
+    ax.set_ylabel(ylabel)
+
+    if norma :
+        ax.set_ylim(-1, 1)
+
+def plot_image(ax, image):
+
+    ax.imshow(np.log10(image+1), cmap='gray')
+    ax.set_ylabel(f"Input image")
+
+def plot_res2d(ax, residus2d):
+
+    vmax = max(np.abs(np.min(residus2d)), np.max(residus2d))
+    ax.imshow(residus2d, cmap='bwr', vmin=-vmax/2, vmax=vmax/2)
+    ax.set_ylabel(f"Residus")
+
+def plot_chi2eq(ax, chi2eq):
+
+    vmax = max(np.abs(np.min(chi2eq)), np.max(chi2eq))
+    title = "\\frac{res}{\\Vert res \\Vert} \\cdot \\frac{res^2}{\\sigma^2_{Read} + it / \\sigma_{gain}}"
+    ax.imshow(chi2eq, cmap='bwr', vmin=-vmax/2, vmax=vmax/2)
+    ax.set_ylabel(f"${title}$")
 
 
-def open_fold(args, paths, folds, nb_level=10):
+
+
+
+
+
+
+def open_fold(args, paths, folds, nb_level=3):
 
     """
     dict res : 
@@ -253,7 +235,7 @@ def open_fold(args, paths, folds, nb_level=10):
         params = json.load(f)
 
     with open(f"{paths.test}/hparams.json", "r") as f:
-        hp = json.load(fjson)
+        hp = json.load(f)
 
     with open(f"{paths.test}/variable_params.pck", "rb") as f:
         vp = pickle.load(f)
@@ -295,11 +277,14 @@ def open_fold(args, paths, folds, nb_level=10):
         pred = np.load(f"{paths.test}/{folds.pred_folder}/{file}")
         true = np.load(f"{paths.test}/{Args.folder_output}/{file}")
 
-        res["flux"][i] = np.sum(pred) / hp["CCD_GAIN"] # e- / (e-/ADU) = flux in ADU
+        res["flux"][i] = np.sum(true) / hp["CCD_GAIN"] # e- / (e-/ADU) = flux in ADU
 
-        score, score_norma = compute_score(Args.score, true, pred, sim, num_spec_str)
-        res["classic"][i] = score
-        res["norma"][i] = score_norma
+        result = compute_score(Args.score, true, pred, sim, num_spec_str)
+
+        print(result['score'], result['score_norma'])
+
+        res["classic"][i] = result['score']
+        res["norma"][i] = result['score_norma']
         res["file"][i] = file
         res["num"][i] = num_spec_str
 
@@ -308,9 +293,9 @@ def open_fold(args, paths, folds, nb_level=10):
     # FIGURE flux2score
     plt.figure(figsize=(12, 8))
     for mode, col in [("classic", "g"), ("norma", "r")]:
-        plt.plot(res["flux"], res[mode]*100, color=col, label=mode, linestyle="", marker=".", alpha=0.7)
-    plt.xlabel("Flux (en ADU)")
-    plt.ylabel(f"Score (%)")
+        plt.plot(res["flux"]/1000, res[mode], color=col, label=mode, linestyle="", marker=".", alpha=0.7)
+    plt.xlabel("Flux (en kADU)")
+    plt.ylabel(f"Score")
     plt.xscale("log")
     plt.legend()
     plt.savefig(f"{Paths.save}/flux2score.png")
@@ -318,17 +303,39 @@ def open_fold(args, paths, folds, nb_level=10):
 
 
 
+    
+
     # 10 exemple of scores
     for mode in ["classic", "norma"]:
 
+        print(f"res mode {mode}: ", res[mode])
+
         isNorma = True if mode == "norma" else False
 
-        for i, level in enumerate(np.linspace(np.min(res[mode]), np.max(res[mode]), nb_level)):
+        RESMIN = np.min(res[mode][~np.isnan(res[mode])])
+        RESMAX = np.max(res[mode][~np.isnan(res[mode])])
+        true_levels = np.copy(res[mode])
+        true_levels[np.isnan(res[mode])] = np.inf
 
-            near = np.argmin(np.abs(res[mode]-level))
-            makeOneSpec(args, paths, folds, res, vp, near, give_norma=isNorma, give_image=False, savename=f"Level{i}_{mode}")
-            makeOneSpec(args, paths, folds, res, vp, near, give_norma=isNorma, give_image=True, savename=f"Level{i}_{mode}")
-            if mode == "classic" : makeResidus(args, paths, folds, res, near, savename=f"Level{i}_{mode}")
+        for i, level in enumerate(np.linspace(RESMIN, RESMAX, nb_level)):
+
+            near = np.argmin(np.abs(true_levels-level))
+            num_spec = res["num"][near]
+
+            print(level, num_spec)
+
+            pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
+            true = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
+
+            # set sim
+            for param in vp.keys():
+                if param[:4] != "arg.": 
+                    sim.__setattr__(param, vp[param][near])
+                else:
+                    sim.psf_function['arg'][0][0] = vp[param][near]
+
+            makeOneSpec(true, pred, sim, vp, num_spec, give_norma=isNorma, savename=f"Level{i}_{mode}")
+            # makeOneSpec(true, pred, sim, vp, num_spec, give_norma=True, savename=f"Level{i}_{mode}")
 
 
 
@@ -354,6 +361,16 @@ def plotMinMaxScore(X, Y, minXY, maxXY, dX):
 
     plt.scatter(X[0] + minXY[0] * dX + dX/2, Y[minXY[1]], marker="d", facecolor='white', color='k')
     plt.scatter(X[0] + maxXY[0] * dX + dX/2, Y[maxXY[1]], marker="d", facecolor='darkred', color='k')
+
+
+
+def plot_full_legend(ax, varp, n):
+
+    ax.scatter([], [], marker='d', label=f"Target : {varp['TARGET'][n]}", color='k')
+    for key, val in varp.items():
+        if key != "TARGET": 
+            skey = key if key not in tradargs.keys() else tradargs[key]
+            ax.scatter([], [], marker='*', label=f"{skey} = {val[n]:.2f}", color='k')
 
 
 
@@ -406,9 +423,12 @@ if __name__ == "__main__":
     os.makedirs(Paths.pred_folder, exist_ok=True)
     
 
-    # chargement des params du train 
-    with open(f"{Paths.train}/hist_params.json", 'r') as f:
-        train_params = json.load(f)
+    # chargement des params du train
+    try:
+        with open(f"{Paths.train}/hist_params.json", 'r') as f:
+            train_params = json.load(f)
+    except:
+        train_params = dict()
 
 
 
@@ -417,9 +437,11 @@ if __name__ == "__main__":
     if Args.test in os.listdir(Paths.pred_folder) : shutil.rmtree(Paths.save)
     os.mkdir(f"{Paths.save}")
     os.mkdir(f"{Paths.save}/metric")
-    os.mkdir(f"{Paths.save}/example_spectrum")
-    os.mkdir(f"{Paths.save}/example_image")
-    os.mkdir(f"{Paths.save}/residus")
+    os.mkdir(f"{Paths.save}/figure_res")
+    os.mkdir(f"{Paths.save}/figure_res_norma")
+    os.mkdir(f"{Paths.save}/figure_image")
+    os.mkdir(f"{Paths.save}/figure_chi2eq")
+    os.mkdir(f"{Paths.save}/figure_full")
 
 
 
@@ -450,10 +472,6 @@ if __name__ == "__main__":
 
             x0 = xs[0]
 
-            print(f"\nkey {key}")
-            print(xs)
-            print(dmax, nbins)
-
             xbin = np.zeros(nbins)
             ybin = np.zeros(nbins)
             ystd = np.zeros(nbins)
@@ -466,14 +484,11 @@ if __name__ == "__main__":
                 ybin[i] = np.mean(resi)
                 ystd[i] = np.std(resi)
 
-
-            print(xbin)
-            print(ybin)
-
             plt.figure(figsize=(16, 10))
             plt.scatter(val, yscore, color='k', marker='+', alpha=0.5)
             plt.errorbar(xbin, ybin, yerr=ystd, color="r", linestyle="", marker=".")
-            # plt.legend()
+            showTrainParams(train_params, var_name=key)
+            plt.legend()
             plt.xlabel(f"Variable {key}")
             plt.ylabel(ylabel)
 

@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
     sim = SpecSimulator(psf_function=psf_function, savingFolders=False, target_set="setAll")
 
-    if 1:
+    if 0:
         pred = "pred_SCaM_chi2_train16k_5e-05"
         testfolder = "test1k"
         num_specs = ["0136"]
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         testfolder = "test1k"
         num_specs = ["0044"]
 
-    if 0:
+    if 1:
         pred = "pred_Spectractor_x_x_0e+00"
         testfolder = "test4"
         num_specs = ["0"]
@@ -93,9 +93,11 @@ if __name__ == "__main__":
         pred_simu, _, xc, yc = sim.makeSim(num_simu=num, updateParams=False, giveSpectrum=pred, with_noise=False)
 
         print(true_simu.shape)
+        print(f"angle : ", sim.ROTATION_ANGLE)
 
         # true_simu = true_simu[:, 128:]
         # pred_simu = pred_simu[:, 128:]
+
         mask = np.zeros_like(true_simu)
         for xi, yi in zip(xc, yc):
             mask[int(max(0, yi-timbre_size)):int(min(true_simu.shape[0], yi+timbre_size)), int(max(0, xi-timbre_size)):int(min(true_simu.shape[1], xi+timbre_size))] = 1
