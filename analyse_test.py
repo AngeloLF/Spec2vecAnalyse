@@ -142,25 +142,43 @@ def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
 
 
     # PLOT "chi2eq"
-    fig, (ax1, ax2) = plt.subplots(2, 1, sharex=False, figsize=(16, 8), gridspec_kw={'height_ratios': [1, 1]})
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(16, 8), gridspec_kw={'height_ratios': [1, 1, 1]})
     plt.suptitle(fulltitle)
-    plot_res2d(ax1, resultChi2['residus'][give_norma])
-    plot_chi2eq(ax2, resultChi2['chi2eq'][give_norma])
+    plot_image(ax1, true_image)
+    plot_res2d(ax2, resultChi2['residus'][give_norma])
+    plot_chi2eq(ax3, resultChi2['chi2eq'][give_norma])
+
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0)
     plt.savefig(f"{Paths.save}/figure_chi2eq/{savename}.png")
     plt.close()
 
 
     # PLOT "full"
+    # fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(16, 8), gridspec_kw={'height_ratios': [1, 1, 1]})
+    # plt.suptitle(fulltitle)
+    # plot_image(ax1, true_image)
+    # plot_res2d(ax2, resultChi2['residus'][give_norma])
+    # plot_chi2eq(ax3, resultChi2['chi2eq'][give_norma])
+    # plt.savefig(f"{Paths.save}/figure_full/{savename}.png")
+    # plt.close()
+
     fig = plt.figure(figsize=(20, 8))
-    outer = gridspec.GridSpec(1, 2, width_ratios=[1, 2])
+    outer = gridspec.GridSpec(1, 2, width_ratios=[1, 1])
     gs1 = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[0], height_ratios=[3, 1])
-    gs2 = gridspec.GridSpecFromSubplotSpec(2, 1, subplot_spec=outer[1])
-    ax1, ax2, ax3, ax4 = plt.subplot(gs1[0]), plt.subplot(gs1[1]), plt.subplot(gs2[0]), plt.subplot(gs2[1])
+    gs2 = gridspec.GridSpecFromSubplotSpec(3, 1, subplot_spec=outer[1], height_ratios=[1, 1, 1])
+    ax1, ax2, ax3, ax4, ax5 = plt.subplot(gs1[0]), plt.subplot(gs1[1]), plt.subplot(gs2[0]), plt.subplot(gs2[1]), plt.subplot(gs2[2])
     plt.suptitle(fulltitle)
+
     plot_spec(ax1, true, pred, varp, n)
     plot_res(ax2, true, pred)
+
     plot_image(ax3, true_image)
-    plot_chi2eq(ax4, resultChi2['chi2eq'][give_norma])
+    plot_res2d(ax4, resultChi2['residus'][give_norma])
+    plot_chi2eq(ax5, resultChi2['chi2eq'][give_norma])
+
+    plt.subplots_adjust(hspace=0)
+    plt.tight_layout()
     plt.savefig(f"{Paths.save}/figure_full/{savename}.png")
     plt.close()
 
@@ -174,7 +192,7 @@ def plot_spec(ax, yt, yp, varp, num_str):
     ax.plot(x, yt, c='g', label='True')
     ax.plot(x, yp, c='r', label='Pred')
     plot_full_legend(ax, varp, n)
-    ax.legend()
+    ax.legend(fontsize=8)
     ax.set_xlabel(f"$\lambda$ (nm)")
     ax.set_ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_str}.npy")
 
@@ -199,12 +217,16 @@ def plot_image(ax, image):
 
     ax.imshow(np.log10(image+1), cmap='gray')
     ax.set_ylabel(f"Input image")
+    ax.set_xticks([]) # Remove x-ticks
+    ax.set_yticks([]) # Remove y-ticks
 
 def plot_res2d(ax, residus2d):
 
     vmax = max(np.abs(np.min(residus2d)), np.max(residus2d))
     ax.imshow(residus2d, cmap='bwr', vmin=-vmax/2, vmax=vmax/2)
     ax.set_ylabel(f"Residus")
+    ax.set_xticks([]) # Remove x-ticks
+    ax.set_yticks([]) # Remove y-ticks
 
 def plot_chi2eq(ax, chi2eq):
 
@@ -212,6 +234,8 @@ def plot_chi2eq(ax, chi2eq):
     title = "\\frac{res}{\\Vert res \\Vert} \\cdot \\frac{res^2}{\\sigma^2_{Read} + it / \\sigma_{gain}}"
     ax.imshow(chi2eq, cmap='bwr', vmin=-vmax/2, vmax=vmax/2)
     ax.set_ylabel(f"${title}$")
+    ax.set_xticks([]) # Remove x-ticks
+    ax.set_yticks([]) # Remove y-ticks
 
 
 
@@ -554,4 +578,6 @@ if __name__ == "__main__":
 
         for mode in ["classic", "norma"]:
 
-            f.write(f"{mode}={np.mean(res[mode])}~{np.std(res[mode])}\n")
+            true_res = np.copy(res[mode])[~np.isnan(res[mode])]
+
+            f.write(f"{mode}={np.mean(true_res)}~{np.std(true_res)}\n")
