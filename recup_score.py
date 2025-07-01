@@ -268,11 +268,8 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
                 for i, typeScore in enumerate(["classic"]):
 
                     html_codes.append(f"<h2>{typeScore}</h2>")
-
-                    if score == "L1" and typeScore == "classic":
-                        html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/{name_tests}", markers=markers, colors=colors))
-                    else:
-                        html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i]))
+                    # if score == "L1" and typeScore == "classic":
+                    html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/{name_tests}", markers=markers, colors=colors))
 
                 f.write('\n'.join(html_codes))
 
