@@ -280,7 +280,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
 
 if __name__ == "__main__":
 
-    score_type = ["L1"]
+    score_type = ["L1", "chi2"]
     path_analyse = f"./results/analyse"
     path_resume = f"{path_analyse}/all_resume"
 
