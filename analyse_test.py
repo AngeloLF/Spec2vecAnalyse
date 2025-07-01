@@ -74,6 +74,12 @@ def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3):
     chi2eq_n = residus_n**2 / (sigma_READ**2 + true_simu / gain) * np.sign(residus_n)
     score_n = np.sum(np.abs(chi2eq_n)) / N
 
+    # reduc for spectractor
+    if Args.model == "Spectractor" and score > 50:
+        score = np.nan
+        score_n = np.nan
+
+
     return {'score' : score,
             'score_norma' : score_n,
             'fact' : fact_n,
