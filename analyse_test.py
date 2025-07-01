@@ -323,6 +323,20 @@ def open_fold(args, paths, folds, nb_level=5):
 
 
 
+    # FIGURE hist_score
+    plt.figure(figsize=(12, 8))
+    vmin = min(np.nanmin(res["classic"]), np.nanmin(res["norma"]))
+    vmax = max(np.nanmax(res["classic"]), np.nanmax(res["norma"]))
+    for mode, col in [("classic", "g"), ("norma", "r")]:
+        plt.hist(res[mode], bins=50, range=(vmin, vmax), color=col, alpha=0.8)
+    plt.xlabel(f"Score")
+    plt.yscale("log")
+    plt.legend()
+    plt.savefig(f"{Paths.save}/hist_score.png")
+    plt.close()    
+
+
+
     
 
     # 10 exemple of scores
