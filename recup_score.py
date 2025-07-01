@@ -292,11 +292,11 @@ if __name__ == "__main__":
 
 
     if "local" in sys.argv:
-        tests, nb_ft = {"classic" : ["test64", "test64calib"], "calib" : ["test64calib"]}, 3
-        markers = {"classic" : None, "calib" : None}
+        tests, nb_ft = {"classic" : ["test4", "test5", "test6"]}, 3
+        markers = {"classic" : None}
     else: 
-        tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"], "calib" : ["test1kcalib"]}, 4
-        markers = {"classic" : None, "calib" : None}
+        tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"]}, 3
+        markers = {"classic" : None}
 
     colors = {
         "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
@@ -307,11 +307,16 @@ if __name__ == "__main__":
     }
 
     mode = "dispo" if "all" not in sys.argv else "all"
+    
+    models = list()
+    for score in score_type:
+        models += recup_mt(score, mode)
+    models = list(set(models))
+
+    pbar = tqdm(total=nb_ft*len(models)*len(score_type))
 
     for name, test in tests.items():
 
-        models = recup_mt("L1", mode)
-        pbar = tqdm(total=nb_ft*len(models))
         make_score(name, test, models, score_type, pbar, markers[name], colors)
 
     pbar.close()
