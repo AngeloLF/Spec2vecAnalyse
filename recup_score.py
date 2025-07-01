@@ -238,7 +238,9 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
                 soa = np.sum(np.array(tot_std[i])**2)**0.5
                 y[i, m, -3] = mom
                 e[i, m, -3] = soa
-                x[i, m, -3] = f"{mom:.2f} ~ {soa:.2f}"
+                if score == "L1"     : x[i, m, -3] = f"{mom:.2f} ~ {soa:.2f}"
+                elif score == "chi1" : x[i, m, -3] = f"{mom:.6f} ~ {soa:.6f}"
+                else : raise Exception(f"Score {score} unknow")
 
         for i in range(2):
 
