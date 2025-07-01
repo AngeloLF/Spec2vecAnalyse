@@ -184,7 +184,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
         
         for m, model in enumerate(models):
 
-            print(f"{c.ly}Model {model}{c.d}")
+            # print(f"{c.ly}Model {model}{c.d}")
 
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
@@ -193,7 +193,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
 
                 test = otest if "no0" not in model else f"{otest}no0"
 
-                print(f"{c.y}Test {otest}{c.d}")
+                # print(f"{c.y}Test {otest}{c.d}")
 
                 pbar.update(1)
 
@@ -239,7 +239,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
                 y[i, m, -3] = mom
                 e[i, m, -3] = soa
                 if score == "L1"     : x[i, m, -3] = f"{mom:.2f} ~ {soa:.2f}"
-                elif score == "chi1" : x[i, m, -3] = f"{mom:.6f} ~ {soa:.6f}"
+                elif score == "chi2" : x[i, m, -3] = f"{mom:.6f} ~ {soa:.6f}"
                 else : raise Exception(f"Score {score} unknow")
 
         for i in range(2):
