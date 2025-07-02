@@ -76,7 +76,7 @@ def initAnalyse(tests, colors):
     return ANA
 
 
-def addAnalyse(ana, name, listOfArgs, inSetPreds):
+def addAnalyse(ana, name, inSetPreds, listOfArgs):
 
     ana.k2a[name] = dict()
     ana.k2p[name] = inSetPreds
@@ -122,6 +122,7 @@ def makePlotAnalyse(ana, score):
 
             plt.errorbar(np.arange(len(y)), y, yerr=yerr, color=col, marker='.' )
 
+        plt.title(f"{k}")
         plt.xticks(np.arange(len(ns)), ns)
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
         plt.close()
