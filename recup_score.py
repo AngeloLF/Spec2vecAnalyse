@@ -50,6 +50,14 @@ def recup_mt(score, mode="dispo"):
 
 
 
+def addAnalyse(ana, name, listOfCarac):
+
+    ana[]
+
+
+
+
+
 
 
 
@@ -289,6 +297,13 @@ if __name__ == "__main__":
     os.makedirs(f"{path_resume}/html", exist_ok=True)
 
 
+
+    # Special graph
+    ANALYSE = {
+        "SCaM_by_loss"  : [["SCaM_", "chi2_"], ["SCaM_", "MSE_"], ["SCaM_", "L1N_"]],
+        "SCaM_by_train" : [["SCaM_", "train2k_"], ["SCaM_", "train4k_"], ["SCaM_", "train8k_"], ["SCaM_", "train16k_"]],
+        "SCaM_by_lr"    : [["SCaM_", "1e-03"], ["SCaM_", "1e-04"], ["SCaM_", "5e-05"], ["SCaM_", "1e-05"], ["SCaM_", "5e-06"], ["SCaM_", "1e-06"]],
+    }
 
     if "local" in sys.argv:
         tests, nb_ft = {"classic" : ["test4", "test5", "test6"]}, 3
