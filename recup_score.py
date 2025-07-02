@@ -59,51 +59,54 @@ def initAnalyse(tests, colors):
     a : args
 
     For example:
-        SCaM_by_loss = [["SCaM_", "chi2_"], ["SCaM_", "MSE"]]
-        k2n : SCaM_by_loss -> ["SCaM_chi2", "SCaM_MSE"]
-        n2a : "SCaM_chi2" -> ["SCaM_", "chi2_"]
-        n2v : "SCaM_chi2" -> {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}
+        SCaM_by_loss = ["chi2", "MSE" "L1N"]
+
+        k2a : SCaM_by_loss -> {"chi2": {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}, 
+                               "MSE" : {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]},
+                               "L1N" : {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}}
+        k2p : SCaM_by_loss -> ["SCaM_chi2_train2k_1e-6", ...]
     """
 
     ANA = SimpleNamespace()
-    ANA.k2n = dict()
-    ANA.n2a = dict()
-    ANA.n2v = dict()
+    ANA.k2a = dict()
+    ANA.k2p = dict()
     ANA.tests = tests
     ANA.colors = colors
 
     return ANA
 
 
-def addAnalyse(ana, name, listOfCarac):
+def addAnalyse(ana, name, listOfArgs, inSetPreds):
 
-    listOfNames = list()
+    ana.k2a[name] = dict()
+    ana.k2p[name] = inSetPreds
 
-    for l in listOfCarac:
+    for a in listOfArgs:
 
-        a = [li.replace("_", "") for li in l]
-        n = "_".join(a)
-        listOfNames.append(n)
-        ana.n2a[n] = l
-        ana.n2v[n] = dict()
-        for test in ana.tests : ana.n2v[n][test] = list()
+        ana.k2a[name][a] = dict()
 
-    ana.k2n[name] = listOfNames
+        for test in ana.tests : ana.k2a[name][a][test] = list()
 
 
 def addValueInAnalyse(ana, model, otest, m, s):
 
-    for n, a in ana.n2a.items():
+    for k, p in ana.k2p.items():
 
-        if np.all([ai in model for ai in a]):
+        if model in p:
 
-            ana.n2v[n][otest].append(m)
+            for a in ana.k2a[k].keys():
+
+                if a in model:
+
+                    ana.k2a[k][a][test].append(m)
 
 
 
 def makePlotAnalyse(ana, score):
 
-    for k, ns in ana.k2n.items():
+    for k, a in ana.k2n.items():
+
+        ns = list(a.keys())
 
         plt.figure(figsize=(16, 8))
 
@@ -114,10 +117,10 @@ def makePlotAnalyse(ana, score):
 
             for i, n in enumerate(ns):
 
-                y[i] = np.mean(ana.n2v[n][test])
-                yerr[i] = np.std(ana.n2v[n][test])
+                y[i] = np.mean(a[n][test])
+                yerr[i] = np.std(a[n][test])
 
-            plt.errorbar(np.arange(len(y)), y, yerr=yerr, color=col, marker='.')
+            plt.errorbar(np.arange(len(y)), y, yerr=yerr, color=col, marker='.' )
 
         plt.xticks(np.arange(len(ns)), ns)
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
@@ -357,6 +360,26 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
 
 
 
+
+def possibility(models, losses, trains, lrs, loads=[None]):
+
+    preds = list()
+
+    for model in models:
+        for loss in losses:
+            for train in trains:
+                for lr in lrs:
+                    for load in loads:
+
+                        pred = f"pred_{model}_{loss}_{train}_{lr}"
+                        if load is not None : pred += f"_{load}"
+                        preds.append(pred)
+
+    return preds
+
+
+
+
 if __name__ == "__main__":
 
     score_type = ["L1", "chi2"]
@@ -381,9 +404,11 @@ if __name__ == "__main__":
 
     # Special graph
     ANALYSE = initAnalyse(tests["classic"], tests_colors["classic"])
-    addAnalyse(ANALYSE, "SCaM_by_loss",  [["SCaM_", "chi2_"], ["SCaM_", "MSE_"], ["SCaM_", "L1N_"]])
-    addAnalyse(ANALYSE, "SCaM_by_train", [["SCaM_", "train2k_"], ["SCaM_", "train4k_"], ["SCaM_", "train8k_"], ["SCaM_", "train16k_"]])
-    addAnalyse(ANALYSE, "SCaM_by_lr",    [["SCaM_", "1e-03"], ["SCaM_", "1e-04"], ["SCaM_", "5e-05"], ["SCaM_", "1e-05"], ["SCaM_", "5e-06"], ["SCaM_", "1e-06"]])
+
+    scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lr=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+    addAnalyse(ANALYSE, "SCaM_by_loss",  scam_pred, ["chi2", "MSE", "L1N_"])
+    addAnalyse(ANALYSE, "SCaM_by_train", scam_pred, ["train2k", "train4k", "train8k", "train16k"])
+    addAnalyse(ANALYSE, "SCaM_by_lr",    scam_pred, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
     colors = {
         "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
