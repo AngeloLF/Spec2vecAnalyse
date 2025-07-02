@@ -3,6 +3,9 @@ import numpy as np
 from tqdm import tqdm
 import coloralf as c
 import matplotlib.pyplot as plt
+from types import SimpleNamespace
+
+
 
 
 
@@ -48,14 +51,77 @@ def recup_mt(score, mode="dispo"):
 
 
 
+def initAnalyse(tests, colors):
+
+    """
+    k : key
+    n : names
+    a : args
+
+    For example:
+        SCaM_by_loss = [["SCaM_", "chi2_"], ["SCaM_", "MSE"]]
+        k2n : SCaM_by_loss -> ["SCaM_chi2", "SCaM_MSE"]
+        n2a : "SCaM_chi2" -> ["SCaM_", "chi2_"]
+        n2v : "SCaM_chi2" -> {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}
+    """
+
+    ANA = SimpleNamespace()
+    ANA.k2n = dict()
+    ANA.n2a = dict()
+    ANA.n2v = dict()
+    ANA.tests = tests
+    ANA.colors = colors
+
+    return ANA
 
 
 def addAnalyse(ana, name, listOfCarac):
 
-    ana[]
+    listOfNames = list()
+
+    for l in listOfCarac:
+
+        a = [li.replace("_", "") for li in l]
+        n = "_".join(a)
+        listOfNames.append(n)
+        ana.n2a[n] = l
+        ana.n2v[n] = dict()
+        for test in ana.tests : ana.n2v[n][test] = list()
+
+    ana.k2n[name] = listOfNames
+
+
+def addValueInAnalyse(ana, model, otest, m, s):
+
+    for n, a in ana.n2a.items():
+
+        if np.all([ai in model for ai in a]):
+
+            ana.n2v[n][otest].append(m)
 
 
 
+def makePlotAnalyse(ana, score):
+
+    for k, ns in ana.k2n.items():
+
+        plt.figure(figsize=(16, 8))
+
+        for test, col in zip(ana.tests, ana.colors):
+            
+            y = np.zeros(len(ns))
+            yerr = np.zeros(len(ns))
+
+            for i, n in enumerate(ns):
+
+                y[i] = np.mean(ana.n2v[n][test])
+                yerr[i] = np.std(ana.n2v[n][test])
+
+            plt.errorbar(np.arange(len(y)), y, yerr=yerr, color=col, marker='.')
+
+        plt.xticks(np.arange(len(ns)), ns)
+        plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
+        plt.close()
 
 
 
@@ -171,7 +237,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
     return html
 
 
-def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
+def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors):
 
     
 
@@ -225,6 +291,8 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
                             y[i, m, t] = mean
                             e[i, m, t] = std
                             x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
+
+                            addValueInAnalyse(ana, model, otest, mean, std)
 
                             tot_mean[i].append(mean)
                             tot_std[i].append(std)
@@ -283,6 +351,10 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
 
                 f.write('\n'.join(html_codes))
 
+        makePlotAnalyse(ana, score)
+
+    return ana
+
 
 
 if __name__ == "__main__":
@@ -296,28 +368,29 @@ if __name__ == "__main__":
     os.makedirs(f"{path_resume}/graph", exist_ok=True)
     os.makedirs(f"{path_resume}/html", exist_ok=True)
 
-
-
-    # Special graph
-    ANALYSE = {
-        "SCaM_by_loss"  : [["SCaM_", "chi2_"], ["SCaM_", "MSE_"], ["SCaM_", "L1N_"]],
-        "SCaM_by_train" : [["SCaM_", "train2k_"], ["SCaM_", "train4k_"], ["SCaM_", "train8k_"], ["SCaM_", "train16k_"]],
-        "SCaM_by_lr"    : [["SCaM_", "1e-03"], ["SCaM_", "1e-04"], ["SCaM_", "5e-05"], ["SCaM_", "1e-05"], ["SCaM_", "5e-06"], ["SCaM_", "1e-06"]],
-    }
+    
 
     if "local" in sys.argv:
         tests, nb_ft = {"classic" : ["test4", "test5", "test6"]}, 3
         markers = {"classic" : None}
+        tests_colors = {"classic" : ["r", "g", "b"]}
     else: 
         tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"]}, 3
         markers = {"classic" : None}
+        tests_colors = {"classic" : ["r", "g", "b"]}
+
+    # Special graph
+    ANALYSE = initAnalyse(tests["classic"], tests_colors["classic"])
+    addAnalyse(ANALYSE, "SCaM_by_loss",  [["SCaM_", "chi2_"], ["SCaM_", "MSE_"], ["SCaM_", "L1N_"]])
+    addAnalyse(ANALYSE, "SCaM_by_train", [["SCaM_", "train2k_"], ["SCaM_", "train4k_"], ["SCaM_", "train8k_"], ["SCaM_", "train16k_"]])
+    addAnalyse(ANALYSE, "SCaM_by_lr",    [["SCaM_", "1e-03"], ["SCaM_", "1e-04"], ["SCaM_", "5e-05"], ["SCaM_", "1e-05"], ["SCaM_", "5e-06"], ["SCaM_", "1e-06"]])
 
     colors = {
         "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
         "metric"       : {"chi2" : "r", "MSE" : "b", "L1N" : "g"},
         "trainingType" : {"kwc_":"darkred", "kwcno0":"r", "kwcPXno0":"b", "kno0":"g", "k_":"gray"},
         "trainNk"      : {"16k" : "g", "8k" : "b", "4k" : "r", "2k" : "gray"},
-        "learningRate" : {"1e-06":"b", "1e-05":"g", "5e-05":"yellow", "1e-04":"orange", "1e-03":"red", "1e-02":"darkred"}
+        "learningRate" : {"1e-06":"magenta", "5e-06":"b", "1e-05":"g", "5e-05":"yellow", "1e-04":"orange", "1e-03":"red", "1e-02":"darkred"}
     }
 
     mode = "dispo" if "all" not in sys.argv else "all"
@@ -331,7 +404,7 @@ if __name__ == "__main__":
 
     for name, test in tests.items():
 
-        make_score(name, test, models, score_type, pbar, markers[name], colors)
+        make_score(name, test, models, score_type, ANALYSE, pbar, markers[name], colors)
 
     pbar.close()
 
