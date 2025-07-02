@@ -282,29 +282,28 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
 
                     for i, line in enumerate(data):
 
-                        try:
-                            label, score_i = line.split("=")
-                            mean, std = score_i.split("~")
-                            mean = float(mean)
-                            std = float(std)
+                        label, score_i = line.split("=")
+                        mean, std = score_i.split("~")
+                        mean = float(mean)
+                        std = float(std)
 
-                            if score in ["L1"]:
-                                mean *= 100
-                                std *= 100
+                        if score in ["L1"]:
+                            mean *= 100
+                            std *= 100
 
-                            y[i, m, t] = mean
-                            e[i, m, t] = std
-                            x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
+                        y[i, m, t] = mean
+                        e[i, m, t] = std
+                        x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
 
-                            addValueInAnalyse(ana, model, otest, mean, std)
+                        addValueInAnalyse(ana, model, otest, mean, std)
 
-                            tot_mean[i].append(mean)
-                            tot_std[i].append(std)
+                        tot_mean[i].append(mean)
+                        tot_std[i].append(std)
 
-                        except Exception as err:
+                        # except Exception as err:
                                 
-                            print(f"\nException : {err} ...")
-                            print(f"Error on {data} on {model} -> {test} ...")
+                        #     print(f"\nException : {err} ...")
+                        #     print(f"Error on {data} on {model} -> {test} ...")
 
                 else:
 
