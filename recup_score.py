@@ -405,8 +405,8 @@ if __name__ == "__main__":
     # Special graph
     ANALYSE = initAnalyse(tests["classic"], tests_colors["classic"])
 
-    scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lr=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-    addAnalyse(ANALYSE, "SCaM_by_loss",  scam_pred, ["chi2", "MSE", "L1N_"])
+    scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+    addAnalyse(ANALYSE, "SCaM_by_loss",  scam_pred, ["chi2", "MSE", "L1N"])
     addAnalyse(ANALYSE, "SCaM_by_train", scam_pred, ["train2k", "train4k", "train8k", "train16k"])
     addAnalyse(ANALYSE, "SCaM_by_lr",    scam_pred, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
