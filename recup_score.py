@@ -104,7 +104,7 @@ def addValueInAnalyse(ana, model, otest, m, s):
 
 def makePlotAnalyse(ana, score):
 
-    for k, a in ana.k2n.items():
+    for k, a in ana.k2a.items():
 
         ns = list(a.keys())
 
