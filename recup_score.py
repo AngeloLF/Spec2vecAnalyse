@@ -98,7 +98,7 @@ def addValueInAnalyse(ana, model, otest, m, s):
 
                 if a in model:
 
-                    ana.k2a[k][a][test].append(m)
+                    ana.k2a[k][a][otest].append(m)
 
 
 
