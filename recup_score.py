@@ -107,20 +107,23 @@ def makePlotAnalyse(ana, score):
     for k, a in ana.k2a.items():
 
         ns = list(a.keys())
+        x = np.arange(len(ns))
 
         plt.figure(figsize=(16, 8))
 
         for test, col in zip(ana.tests, ana.colors):
             
-            y = np.zeros(len(ns))
-            yerr = np.zeros(len(ns))
+            y_min = np.zeros(len(ns))
+            y_mean = np.zeros(len(ns))
 
             for i, n in enumerate(ns):
 
-                y[i] = np.mean(a[n][test])
-                yerr[i] = np.std(a[n][test])
+                y_min[i] = np.min(a[n][test])
+                y_mean[i] = np.mean(a[n][test])
 
-            plt.errorbar(np.arange(len(y)), y, yerr=yerr, color=col, marker='.' )
+            plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
+            plt.plot(x, y_min, color=col, marker='*', linestyle="", label="Best")
+            plt.axhline(np.min(y_min), color=col, linestyle=":")
 
         plt.title(f"{k}")
         plt.xticks(np.arange(len(ns)), ns)
