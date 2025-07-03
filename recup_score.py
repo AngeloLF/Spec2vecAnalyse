@@ -80,6 +80,7 @@ def initAnalyse(tests, colors):
 def addAnalyse(ana, name, inSetPreds, listOfArgs):
 
     ana.k2a[name] = dict()
+    ana.k2l[name] = dict()
     ana.k2p[name] = inSetPreds
 
     for a in listOfArgs:
