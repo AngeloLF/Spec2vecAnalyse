@@ -118,17 +118,20 @@ def makePlotAnalyse(ana, score):
 
         for test, col in zip(ana.tests, ana.colors):
             
+            l_min = np.zeros(len(ns)).astype(str)
             y_min = np.zeros(len(ns))
             y_mean = np.zeros(len(ns))
 
+
             for i, n in enumerate(ns):
 
+                l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
                 y_min[i] = np.min(a[n][test])
                 y_mean[i] = np.mean(a[n][test])
 
             # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
             plt.plot(x, y_min, color=col, marker='*', linestyle="-", label=f"Best for {test}")
-            plt.axhline(np.min(y_min), color=col, linestyle=":", label=ana.k2l[k][n][test][np.argmin(y_min)])
+            plt.axhline(np.min(y_min), color=col, linestyle=":", label=l_min[np.argmin(y_min)])
 
 
         plt.legend()
@@ -410,7 +413,7 @@ if __name__ == "__main__":
     ANALYSE = initAnalyse(tests["classic"], tests_colors["classic"])
 
     scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-    addAnalyse(ANALYSE, "SCaM_by_loss",  scam_pred, ["chi2", "MSE", "L1N"])
+    addAnalyse(ANALYSE, "SCaM_by_loss",  scam_pred, ["MSE", "L1N", "chi2"])
     addAnalyse(ANALYSE, "SCaM_by_train", scam_pred, ["train2k", "train4k", "train8k", "train16k"])
     addAnalyse(ANALYSE, "SCaM_by_lr",    scam_pred, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
