@@ -69,6 +69,7 @@ def initAnalyse(tests, colors):
 
     ANA = SimpleNamespace()
     ANA.k2a = dict()
+    ANA.k2l = dict()
     ANA.k2p = dict()
     ANA.tests = tests
     ANA.colors = colors
@@ -84,8 +85,10 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
     for a in listOfArgs:
 
         ana.k2a[name][a] = dict()
+        ana.k2l[name][a] = dict()
 
         for test in ana.tests : ana.k2a[name][a][test] = list()
+        for test in ana.tests : ana.k2l[name][a][test] = list()
 
 
 def addValueInAnalyse(ana, model, otest, m, s):
@@ -99,6 +102,7 @@ def addValueInAnalyse(ana, model, otest, m, s):
                 if a in model:
 
                     ana.k2a[k][a][otest].append(m)
+                    ana.k2l[k][a][otest].append(model)
 
 
 
@@ -121,10 +125,12 @@ def makePlotAnalyse(ana, score):
                 y_min[i] = np.min(a[n][test])
                 y_mean[i] = np.mean(a[n][test])
 
-            plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
-            plt.plot(x, y_min, color=col, marker='*', linestyle="", label="Best")
-            plt.axhline(np.min(y_min), color=col, linestyle=":")
+            # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
+            plt.plot(x, y_min, color=col, marker='*', linestyle="-", label=f"Best for {test}")
+            plt.axhline(np.min(y_min), color=col, linestyle=":", label=ana.k2l[k][n][test][np.argmin(y_min)])
 
+
+        plt.legend()
         plt.title(f"{k}")
         plt.xticks(np.arange(len(ns)), ns)
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
@@ -265,16 +271,12 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
         
         for m, model in enumerate(models):
 
-            # print(f"{c.ly}Model {model}{c.d}")
-
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
             for t, otest in enumerate(tests):
 
                 test = otest if "no0" not in model else f"{otest}no0"
-
-                # print(f"{c.y}Test {otest}{c.d}")
 
                 pbar.update(1)
 
@@ -297,16 +299,14 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
                         y[i, m, t] = mean
                         e[i, m, t] = std
                         x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
+                        if score == "L1"     : x[i, m, t] = f"{mean:.2f} ~ {std:.2f}"
+                        elif score == "chi2" : x[i, m, t] = f"{mean:.4f} ~ {std:.4f}"
+                        else : raise Exception(f"Score {score} unknow")
 
                         addValueInAnalyse(ana, model, otest, mean, std)
 
                         tot_mean[i].append(mean)
                         tot_std[i].append(std)
-
-                        # except Exception as err:
-                                
-                        #     print(f"\nException : {err} ...")
-                        #     print(f"Error on {data} on {model} -> {test} ...")
 
                 else:
 
