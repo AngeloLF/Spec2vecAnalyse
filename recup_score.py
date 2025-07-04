@@ -254,11 +254,18 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
     return html
 
 
-def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors):
+def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
 
     
 
     for score in score_type:
+
+        ana = initAnalyse(tests["classic"], tests_colors["classic"])
+
+        scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+        addAnalyse(ana, "SCaM_by_loss",  scam_pred, ["MSE", "L1N", "chi2"])
+        addAnalyse(ana, "SCaM_by_train", scam_pred, ["train2k", "train4k", "train8k", "train16k"])
+        addAnalyse(ana, "SCaM_by_lr",    scam_pred, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
         if score not in os.listdir(f"{path_analyse}"):
             break
@@ -365,8 +372,6 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
 
         makePlotAnalyse(ana, score)
 
-    return ana
-
 
 
 
@@ -400,8 +405,6 @@ if __name__ == "__main__":
     os.makedirs(f"{path_resume}/graph", exist_ok=True)
     os.makedirs(f"{path_resume}/html", exist_ok=True)
 
-    
-
     if "local" in sys.argv:
         tests, nb_ft = {"classic" : ["test4", "test5", "test6"]}, 3
         markers = {"classic" : None}
@@ -410,14 +413,6 @@ if __name__ == "__main__":
         tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"]}, 3
         markers = {"classic" : None}
         tests_colors = {"classic" : ["r", "g", "b"]}
-
-    # Special graph
-    ANALYSE = initAnalyse(tests["classic"], tests_colors["classic"])
-
-    scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-    addAnalyse(ANALYSE, "SCaM_by_loss",  scam_pred, ["MSE", "L1N", "chi2"])
-    addAnalyse(ANALYSE, "SCaM_by_train", scam_pred, ["train2k", "train4k", "train8k", "train16k"])
-    addAnalyse(ANALYSE, "SCaM_by_lr",    scam_pred, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
     colors = {
         "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g"},
@@ -438,7 +433,7 @@ if __name__ == "__main__":
 
     for name, test in tests.items():
 
-        make_score(name, test, models, score_type, ANALYSE, pbar, markers[name], colors)
+        make_score(name, test, models, score_type, pbar, markers[name], colors)
 
     pbar.close()
 
