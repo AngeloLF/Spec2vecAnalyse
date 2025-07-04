@@ -155,9 +155,9 @@ def makePlotAnalyse(ana, score):
 
 
         for i in range(len(ns)):
-            means_score = [np.mean(s) for s in score_models.values()]
+            means_score = [np.mean(s) for s in score_models[i].values()]
             mean_score_models[i] = np.min(means_score)
-            mean_score_names[i] = list(score_models.keys())[np.argmin(means_score)]
+            mean_score_names[i] = list(score_models[i].keys())[np.argmin(means_score)]
 
         plt.plot(x, mean_score_models, color="k", marker='*', linestyle="-", label=f"Best average")
         plt.axhline(np.min(mean_score_models), color="k", linestyle=":", label=mean_score_names[np.argmin(mean_score_models)])
@@ -167,7 +167,7 @@ def makePlotAnalyse(ana, score):
         plt.xticks(np.arange(len(ns)), ns)
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
         plt.close()
-        
+
 
 
 
