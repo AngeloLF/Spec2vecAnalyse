@@ -192,33 +192,35 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
         for color_palette, palette in colors.items():
 
-            plt.figure(figsize=(19, 10))
+            for zoom, zoom_str in [(lignes, ""), (lignes[:16], "zoom_")]:
 
-            for i, name in enumerate(lignes):
+                plt.figure(figsize=(19, 10))
 
-                xg = np.ones(len(colonnes)-2) * i
-                yg = y[i][:-2]
+                for i, name in enumerate(lignes):
 
-                color = 'k'
+                    xg = np.ones(len(colonnes)-2) * i
+                    yg = y[i][:-2]
+
+                    color = 'k'
+                    for pal, col in palette.items():
+                        if   color_palette != "learningRate" and pal in name      : color = col
+                        elif color_palette == "learningRate" and pal == name[-5:] : color = col
+
+                    plt.plot(xg, yg, color=color)
+
+                    plt.scatter([i], yg[-1], color=color, marker="s")
+                
+
                 for pal, col in palette.items():
-                    if   color_palette != "learningRate" and pal in name      : color = col
-                    elif color_palette == "learningRate" and pal == name[-5:] : color = col
+                    plt.scatter([], [], color=col, marker='s', label=pal)
 
-                plt.plot(xg, yg, color=color)
-
-                plt.scatter([i], yg[-1], color=color, marker="s")
-            
-
-            for pal, col in palette.items():
-                plt.scatter([], [], color=col, marker='s', label=pal)
-
-            plt.xticks(np.arange(len(lignes)), lignes, rotation=90)
-            plt.tight_layout()
-            plt.yscale("log")
-            plt.legend()
-            # plt.show()
-            plt.savefig(f"{savefig_name}_{score}_{color_palette}.png")
-            plt.close()
+                plt.xticks(np.arange(len(lignes)), lignes, rotation=90)
+                plt.tight_layout()
+                plt.yscale("log")
+                plt.legend()
+                # plt.show()
+                plt.savefig(f"{savefig_name}_{zoom_str}{score}_{color_palette}.png")
+                plt.close()
 
 
 
