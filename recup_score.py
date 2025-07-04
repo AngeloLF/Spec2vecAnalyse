@@ -92,7 +92,7 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
         for test in ana.tests : ana.k2l[name][a][test] = list()
 
 
-def addValueInAnalyse(ana, model, otest, m, s, resume_file):
+def addValueInAnalyse(ana, model, otest, m, s):
 
     for k, p in ana.k2p.items():
 
@@ -100,10 +100,19 @@ def addValueInAnalyse(ana, model, otest, m, s, resume_file):
 
             for a in ana.k2a[k].keys():
 
-                if a in model:
+                if a[0] == "~":
 
-                    ana.k2a[k][a][otest].append(m)
-                    ana.k2l[k][a][otest].append(resume_file)
+                    if a[1:] not in model:
+
+                        ana.k2a[k][a][otest].append(m)
+                        ana.k2l[k][a][otest].append(model)
+
+                else:
+
+                    if a in model:
+
+                        ana.k2a[k][a][otest].append(m)
+                        ana.k2l[k][a][otest].append(model)
 
 
 
@@ -262,10 +271,16 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
         ana = initAnalyse(tests, tests_colors)
 
-        scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-        addAnalyse(ana, "SCaM_by_loss",  scam_pred, ["MSE", "L1N", "chi2"])
-        addAnalyse(ana, "SCaM_by_train", scam_pred, ["train2k", "train4k", "train8k", "train16k"])
-        addAnalyse(ana, "SCaM_by_lr",    scam_pred, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+        scam_pred_1 = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+        addAnalyse(ana, "SCaM_by_loss",  scam_pred_1, ["MSE", "L1N", "chi2"])
+        addAnalyse(ana, "SCaM_by_train", scam_pred_1, ["train2k", "train4k", "train8k", "train16k"])
+        addAnalyse(ana, "SCaM_by_lr",    scam_pred_1, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+
+        scam_pred_2 = possibility(models=["SCaM"], losses=["chi2"], trains=["train16k", "train16kno0", "train16kwc", "train16kwcno0", "train16kwcPX", "train16kwcPXno0"], lrs=["1e-04", "5e-05", "1e-05", "5e-06"])
+        addAnalyse(ana, "SCaM_by_16k_all",     scam_pred_2, ["16k_", "16kno0_", "16kwc_", "16kwcno0_", "16kwcPX_", "16kwcPXno0_"])
+        addAnalyse(ana, "SCaM_by_16k_calib",   scam_pred_2, ["~wc", "wc"])
+        addAnalyse(ana, "SCaM_by_16k_no0",   scam_pred_2, ["~no0", "no0"])
+
 
         if score not in os.listdir(f"{path_analyse}"):
             break
@@ -293,9 +308,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
                 if f"{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/{model}"):
 
-                    resume_file = f"{path_analyse}/{score}/{model}/{test}/resume.txt"
-
-                    with open(resume_file, "r") as f:
+                    with open(f"{path_analyse}/{score}/{model}/{test}/resume.txt", "r") as f:
                         data = f.read().split("\n")[:-1]
 
                     for i, line in enumerate(data):
@@ -316,7 +329,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
                         elif score == "chi2" : x[i, m, t] = f"{mean:.4f} ~ {std:.4f}"
                         else : raise Exception(f"Score {score} unknow")
 
-                        addValueInAnalyse(ana, model, otest, mean, std, f"{score}/{model}/{test}/resume.txt")
+                        addValueInAnalyse(ana, model, otest, mean, std)
 
                         tot_mean[i].append(mean)
                         tot_std[i].append(std)
