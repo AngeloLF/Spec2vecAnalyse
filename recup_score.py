@@ -167,44 +167,7 @@ def makePlotAnalyse(ana, score):
         plt.xticks(np.arange(len(ns)), ns)
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
         plt.close()
-
-
-
-        plt.figure(figsize=(16, 8))
-
-
-        for i, n in enumerate(ns):
-
-
-
-
-
-        for test, col in zip(ana.tests, ana.colors):
-            
-            l_min = np.zeros(len(ns)).astype(str)
-            y_min = np.zeros(len(ns))
-            y_mean = np.zeros(len(ns))
-
-
-            for i, n in enumerate(ns):
-
-                print(score, k, test, n)
-
-                l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
-                y_min[i] = np.min(a[n][test])
-                y_mean[i] = np.mean(a[n][test])
-
-            # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
-            plt.plot(x, y_min, color=col, marker='*', linestyle="-", label=f"Best for {test}")
-            plt.axhline(np.min(y_min), color=col, linestyle=":", label=l_min[np.argmin(y_min)])
-
-
-        plt.legend()
-        plt.title(f"{k}")
-        plt.xticks(np.arange(len(ns)), ns)
-        plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
-        plt.close()
-
+        
 
 
 
