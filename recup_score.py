@@ -309,7 +309,7 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
                         elif score == "chi2" : x[i, m, t] = f"{mean:.4f} ~ {std:.4f}"
                         else : raise Exception(f"Score {score} unknow")
 
-                        addValueInAnalyse(ana, model, otest, mean, std, resume_file)
+                        addValueInAnalyse(ana, model, otest, mean, std, f"{score}/{model}/{test}/resume.txt")
 
                         tot_mean[i].append(mean)
                         tot_std[i].append(std)
