@@ -123,7 +123,61 @@ def makePlotAnalyse(ana, score):
         ns = list(a.keys())
         x = np.arange(len(ns))
 
+        score_models = list()
+        mean_score_models = np.zeros(len(ns))
+        mean_score_names  = np.zeros(len(ns))
+        for _ in range(len(ns)): 
+            score_models.append(dict())
+
         plt.figure(figsize=(16, 8))
+
+        for test, col in zip(ana.tests, ana.colors):
+            
+            l_min = np.zeros(len(ns)).astype(str)
+            y_min = np.zeros(len(ns))
+            y_mean = np.zeros(len(ns))
+
+
+            for i, n in enumerate(ns):
+
+                for j, m in enumerate(ana.k2l[k][n][test]):
+
+                    if m not in score_models[i] : score_models[i][m] = list()
+                    score_models[i][m].append(a[n][test][j])
+
+                l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
+                y_min[i] = np.min(a[n][test])
+                y_mean[i] = np.mean(a[n][test])
+
+            # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
+            plt.plot(x, y_min, color=col, marker='*', linestyle="-", label=f"Best for {test}")
+            plt.axhline(np.min(y_min), color=col, linestyle=":", label=l_min[np.argmin(y_min)])
+
+
+        for i in range(len(ns)):
+            means_score = [np.mean(s) for s in score_models.values()]
+            mean_score_models[i] = np.min(means_score)
+            mean_score_names[i] = list(score_models.keys())[np.argmin(means_score)]
+
+        plt.plot(x, mean_score_models, color="k", marker='*', linestyle="-", label=f"Best average")
+        plt.axhline(np.min(mean_score_models), color="k", linestyle=":", label=mean_score_names[np.argmin(mean_score_models)])
+
+        plt.legend()
+        plt.title(f"{k}")
+        plt.xticks(np.arange(len(ns)), ns)
+        plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
+        plt.close()
+
+
+
+        plt.figure(figsize=(16, 8))
+
+
+        for i, n in enumerate(ns):
+
+
+
+
 
         for test, col in zip(ana.tests, ana.colors):
             
@@ -150,7 +204,6 @@ def makePlotAnalyse(ana, score):
         plt.xticks(np.arange(len(ns)), ns)
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
         plt.close()
-
 
 
 
