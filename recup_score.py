@@ -196,7 +196,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
                 plt.figure(figsize=(19, 10))
 
-                for i, name in enumerate(lignes):
+                for i, name in enumerate(zoom):
 
                     xg = np.ones(len(colonnes)-2) * i
                     yg = y[i][:-2]
