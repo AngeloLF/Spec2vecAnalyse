@@ -125,7 +125,7 @@ def makePlotAnalyse(ana, score):
 
         score_models = list()
         mean_score_models = np.zeros(len(ns))
-        mean_score_names  = np.zeros(len(ns))
+        mean_score_names  = np.zeros(len(ns)).astype(str)
         for _ in range(len(ns)): 
             score_models.append(dict())
 
@@ -158,10 +158,10 @@ def makePlotAnalyse(ana, score):
             means_score = [np.mean(s) for s in score_models[i].values()]
             mean_score_models[i] = np.min(means_score)
 
-            print(c.r, score_models[i], c.d)
-            print(list(score_models[i].keys()))
-            print(c.g, means_score, c.d)
-            print(c.b, np.argmin(means_score), c.d)
+            # print(c.r, score_models[i], c.d)
+            # print(list(score_models[i].keys()))
+            # print(c.g, means_score, c.d)
+            # print(c.b, np.argmin(means_score), c.d)
 
             mean_score_names[i] = list(score_models[i].keys())[np.argmin(means_score)]
 
