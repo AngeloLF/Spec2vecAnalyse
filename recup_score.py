@@ -134,6 +134,8 @@ def makePlotAnalyse(ana, score):
 
             for i, n in enumerate(ns):
 
+                print(score, k, test, n)
+
                 l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
                 y_min[i] = np.min(a[n][test])
                 y_mean[i] = np.mean(a[n][test])
