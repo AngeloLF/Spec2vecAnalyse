@@ -157,6 +157,10 @@ def makePlotAnalyse(ana, score):
         for i in range(len(ns)):
             means_score = [np.mean(s) for s in score_models[i].values()]
             mean_score_models[i] = np.min(means_score)
+
+            print(score_models[i])
+            print(means_score)
+
             mean_score_names[i] = list(score_models[i].keys())[np.argmin(means_score)]
 
         plt.plot(x, mean_score_models, color="k", marker='*', linestyle="-", label=f"Best average")
