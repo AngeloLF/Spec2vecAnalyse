@@ -254,13 +254,13 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
     return html
 
 
-def make_score(name_tests, tests, models, score_type, pbar, markers, colors):
+def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tests_colors):
 
     
 
     for score in score_type:
 
-        ana = initAnalyse(tests["classic"], tests_colors["classic"])
+        ana = initAnalyse(tests, tests_colors)
 
         scam_pred = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
         addAnalyse(ana, "SCaM_by_loss",  scam_pred, ["MSE", "L1N", "chi2"])
@@ -433,7 +433,7 @@ if __name__ == "__main__":
 
     for name, test in tests.items():
 
-        make_score(name, test, models, score_type, pbar, markers[name], colors)
+        make_score(name, test, models, score_type, pbar, markers[name], colors, tests_colors[name])
 
     pbar.close()
 
