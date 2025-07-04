@@ -158,8 +158,10 @@ def makePlotAnalyse(ana, score):
             means_score = [np.mean(s) for s in score_models[i].values()]
             mean_score_models[i] = np.min(means_score)
 
-            print(score_models[i])
-            print(means_score)
+            print(c.r, score_models[i], c.d)
+            print(list(score_models[i].keys()))
+            print(c.g, means_score, c.d)
+            print(c.b, np.argmin(means_score), c.d)
 
             mean_score_names[i] = list(score_models[i].keys())[np.argmin(means_score)]
 
@@ -351,7 +353,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
                         elif score == "chi2" : x[i, m, t] = f"{mean:.4f} ~ {std:.4f}"
                         else : raise Exception(f"Score {score} unknow")
 
-                        addValueInAnalyse(ana, model, otest, mean, std)
+                        if i == 0 : addValueInAnalyse(ana, model, otest, mean, std)
 
                         tot_mean[i].append(mean)
                         tot_std[i].append(std)
