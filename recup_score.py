@@ -177,7 +177,7 @@ def makePlotAnalyse(ana, score):
 
 
 
-def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', savefig_name=None, markers=None, colors=None):
+def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', savefig_name=None, markers=None, colors=None, score=None):
 
 
     if sorting:
@@ -217,7 +217,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
             plt.yscale("log")
             plt.legend()
             # plt.show()
-            plt.savefig(f"{savefig_name}_{color_palette}.png")
+            plt.savefig(f"{savefig_name}_{score}_{color_palette}.png")
             plt.close()
 
 
@@ -403,7 +403,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
                     html_codes.append(f"<h2>{typeScore}</h2>")
                     # if score == "L1" and typeScore == "classic":
-                    html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/{name_tests}", markers=markers, colors=colors))
+                    html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/{name_tests}", markers=markers, colors=colors, score=score))
 
                 f.write('\n'.join(html_codes))
 
