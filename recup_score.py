@@ -214,7 +214,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
                 for pal, col in palette.items():
                     plt.scatter([], [], color=col, marker='s', label=pal)
 
-                plt.xticks(np.arange(len(lignes)), lignes, rotation=90)
+                plt.xticks(np.arange(len(zoom)), zoom, rotation=90)
                 plt.tight_layout()
                 plt.yscale("log")
                 plt.legend()
