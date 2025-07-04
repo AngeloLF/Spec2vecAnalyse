@@ -92,7 +92,7 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
         for test in ana.tests : ana.k2l[name][a][test] = list()
 
 
-def addValueInAnalyse(ana, model, otest, m, s):
+def addValueInAnalyse(ana, model, otest, m, s, resume_file):
 
     for k, p in ana.k2p.items():
 
@@ -103,7 +103,7 @@ def addValueInAnalyse(ana, model, otest, m, s):
                 if a in model:
 
                     ana.k2a[k][a][otest].append(m)
-                    ana.k2l[k][a][otest].append(model)
+                    ana.k2l[k][a][otest].append(resume_file)
 
 
 
@@ -286,7 +286,9 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
 
                 if f"{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/{model}"):
 
-                    with open(f"{path_analyse}/{score}/{model}/{test}/resume.txt", "r") as f:
+                    resume_file = f"{path_analyse}/{score}/{model}/{test}/resume.txt"
+
+                    with open(resume_file, "r") as f:
                         data = f.read().split("\n")[:-1]
 
                     for i, line in enumerate(data):
@@ -307,7 +309,7 @@ def make_score(name_tests, tests, models, score_type, ana, pbar, markers, colors
                         elif score == "chi2" : x[i, m, t] = f"{mean:.4f} ~ {std:.4f}"
                         else : raise Exception(f"Score {score} unknow")
 
-                        addValueInAnalyse(ana, model, otest, mean, std)
+                        addValueInAnalyse(ana, model, otest, mean, std, resume_file)
 
                         tot_mean[i].append(mean)
                         tot_std[i].append(std)
