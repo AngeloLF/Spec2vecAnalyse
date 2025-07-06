@@ -68,9 +68,10 @@ def initAnalyse(tests, colors):
     """
 
     ANA = SimpleNamespace()
-    ANA.k2a = dict()
-    ANA.k2l = dict()
-    ANA.k2p = dict()
+    ANA.k2a = dict() # float mean
+    ANA.k2s = dict() # float std
+    ANA.k2l = dict() # 
+    ANA.k2p = dict() # 
     ANA.tests = tests
     ANA.colors = colors
 
@@ -80,16 +81,20 @@ def initAnalyse(tests, colors):
 def addAnalyse(ana, name, inSetPreds, listOfArgs):
 
     ana.k2a[name] = dict()
+    ana.k2s[name] = dict()
     ana.k2l[name] = dict()
     ana.k2p[name] = inSetPreds
 
     for a in listOfArgs:
 
         ana.k2a[name][a] = dict()
+        ana.k2s[name][a] = dict()
         ana.k2l[name][a] = dict()
 
-        for test in ana.tests : ana.k2a[name][a][test] = list()
-        for test in ana.tests : ana.k2l[name][a][test] = list()
+        for test in ana.tests : 
+            ana.k2a[name][a][test] = list()
+            ana.k2l[name][a][test] = list()
+            ana.k2s[name][a][test] = list()
 
 
 def addValueInAnalyse(ana, model, otest, m, s):
@@ -105,6 +110,7 @@ def addValueInAnalyse(ana, model, otest, m, s):
                     if a[1:] not in model:
 
                         ana.k2a[k][a][otest].append(m)
+                        ana.k2s[k][a][otest].append(s)
                         ana.k2l[k][a][otest].append(model)
 
                 else:
@@ -112,6 +118,7 @@ def addValueInAnalyse(ana, model, otest, m, s):
                     if a in model:
 
                         ana.k2a[k][a][otest].append(m)
+                        ana.k2s[k][a][otest].append(s)
                         ana.k2l[k][a][otest].append(model)
 
 
