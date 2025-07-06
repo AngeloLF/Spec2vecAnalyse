@@ -297,15 +297,18 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
         ana = initAnalyse(tests, tests_colors)
 
-        scam_pred_1 = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-        addAnalyse(ana, "SCaM_by_loss",  scam_pred_1, ["MSE", "L1N", "chi2"])
-        addAnalyse(ana, "SCaM_by_train", scam_pred_1, ["train2k", "train4k", "train8k", "train16k"])
-        addAnalyse(ana, "SCaM_by_lr",    scam_pred_1, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+        set1 = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_loss",  set1, ["MSE", "L1N", "chi2"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_train", set1, ["train2k", "train4k", "train8k", "train16k"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_lr",    set1, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
-        scam_pred_2 = possibility(models=["SCaM"], losses=["chi2"], trains=["train16k", "train16kno0", "train16kwc", "train16kwcno0", "train16kwcPX", "train16kwcPXno0"], lrs=["1e-04", "5e-05", "1e-05", "5e-06"])
-        addAnalyse(ana, "SCaM_by_16k_all",     scam_pred_2, ["16k_", "16kno0_", "16kwc_", "16kwcno0_", "16kwcPX_", "16kwcPXno0_"])
-        addAnalyse(ana, "SCaM_by_16k_calib",   scam_pred_2, ["~wc", "wc"])
-        addAnalyse(ana, "SCaM_by_16k_no0",   scam_pred_2, ["~no0", "no0"])
+        set2 = possibility(models=["SCaM"], losses=["chi2"], trains=["train16k", "train16kno0", "train16kwc", "train16kwcno0", "train16kwcPX", "train16kwcPXno0"], lrs=["1e-04", "5e-05", "1e-05", "5e-06"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_16k_all",   set2, ["16k_", "16kno0_", "16kwc_", "16kwcno0_", "16kwcPX_", "16kwcPXno0_"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_16k_calib", set2, ["~wc", "wc"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_16k_no0",   set2, ["~no0", "no0"])
+
+        set3 = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-6"])
+        addAnalyse(ana, "ANALYSE_by_Models", set3, ["SCaM_", "SCaMv2_", "SotSu_", "SotSuv2_", "CaTS_", "CaTSv2_"])
 
 
         if score not in os.listdir(f"{path_analyse}"):
