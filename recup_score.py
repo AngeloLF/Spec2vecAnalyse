@@ -171,6 +171,7 @@ def makePlotAnalyse(ana, score):
         plt.legend()
         plt.title(f"{k}")
         plt.xticks(np.arange(len(ns)), ns)
+        plt.yscale("log")
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
         plt.close()
 
