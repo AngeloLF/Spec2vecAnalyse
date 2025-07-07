@@ -4,6 +4,7 @@ import json, pickle, sys, os, shutil, importlib
 from tqdm import tqdm
 import coloralf as c
 import numpy as np
+from time import time
 
 sys.path.append('./Spec2vecModels/')
 from get_argv import get_argv, get_device
@@ -48,6 +49,7 @@ if __name__ == "__main__":
         with torch.no_grad():
 
             pbar = tqdm(total=len(test_dataset))
+            t0 = time()
 
             for (img, true_tensor), spec_name in zip(test_dataset, test_dataset.spectrum_files):
 
@@ -62,6 +64,9 @@ if __name__ == "__main__":
                     getattr(model, "extraApply")(pred, f"{fold}/{pred_fold_name}", true_spec_name)
                 
                 pbar.update(1)
+
+            tf = time() - t0
+            print(f"Full time : {tf} --- {tf / len(test_dataset)}")
 
             pbar.close()
 
