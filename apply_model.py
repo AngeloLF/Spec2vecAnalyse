@@ -49,14 +49,16 @@ if __name__ == "__main__":
         with torch.no_grad():
 
             pbar = tqdm(total=len(test_dataset))
-            t0 = time()
+            t0s = list()
 
             for (img, true_tensor), spec_name in zip(test_dataset, test_dataset.spectrum_files):
 
                 true_spec_name = spec_name.replace("\\", "/").split("/")[-1]
 
                 test_image = img.unsqueeze(0).to(device)
+                t0 = time()
                 pred = model(test_image).cpu().numpy()[0]
+                t0s.append(time()-t0)
 
                 np.save(f"{fold}/{pred_fold_name}/{true_spec_name}", pred)
 
@@ -65,8 +67,8 @@ if __name__ == "__main__":
                 
                 pbar.update(1)
 
-            tf = time() - t0
-            print(f"Full time : {tf} --- {tf / len(test_dataset)}")
+
+            print(f"Full time : {np.sum(t0s)} --- {np.mean(t0s)}")
 
             pbar.close()
 
