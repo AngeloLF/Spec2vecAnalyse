@@ -174,6 +174,7 @@ def makePlotAnalyse(ana, score, idec=0.2):
 
         for i in range(len(ns)):
             means_score = [np.mean(s) for s in score_models[i].values()]
+            print(score_models_std)
             stds_score = [np.sum(np.array(s)**2)**0.5 for s in score_models_std[i].values()]
             mean_score_models[i] = np.min(means_score)
             stds_score_models[i] = stds_score[np.argmin(means_score)]
