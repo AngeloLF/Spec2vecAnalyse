@@ -123,22 +123,28 @@ def addValueInAnalyse(ana, model, otest, m, s):
 
 
 
-def makePlotAnalyse(ana, score):
+def makePlotAnalyse(ana, score, idec=0.2):
 
     for k, a in ana.k2a.items():
 
         ns = list(a.keys())
         x = np.arange(len(ns))
 
-        score_models = list()
         mean_score_models = np.zeros(len(ns))
+        stds_score_models = np.zeros(len(ns))
         mean_score_names  = np.zeros(len(ns)).astype(str)
+
+
+        score_models = list()
+        score_models_std = list()
         for _ in range(len(ns)): 
             score_models.append(dict())
+            score_models_std.append(dict())
 
         plt.figure(figsize=(16, 8))
+        decalages = np.linspace(-idec, idec, len(ana.tests) + 1)
 
-        for test, col in zip(ana.tests, ana.colors):
+        for decalage, test, col in zip(decalages[:-1], ana.tests, ana.colors):
             
             l_min = np.zeros(len(ns)).astype(str)
             y_min = np.zeros(len(ns))
@@ -153,19 +159,24 @@ def makePlotAnalyse(ana, score):
                     if m not in score_models[i] : score_models[i][m] = list()
                     score_models[i][m].append(a[n][test][j])
 
+                    if m not in score_models_std[i] : score_models_std[i][m] = list()
+                    score_models_std[i][m].append(ana.k2l[k][n][test][j])
+
                 l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
                 y_min[i] = np.min(a[n][test])
                 y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])]
                 y_mean[i] = np.mean(a[n][test])
 
             # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
-            plt.plot(x, y_min, color=col, marker='*', linestyle="-", label=f"Best for {test}")
+            plt.errorbar(x+decalage, y_min, yerr=y_std, color=col, marker='*', linestyle="", label=f"Best for {test}")
             plt.axhline(np.min(y_min), color=col, linestyle=":", label=l_min[np.argmin(y_min)])
 
 
         for i in range(len(ns)):
             means_score = [np.mean(s) for s in score_models[i].values()]
+            stds_score = [np.sum(np.array(s)**2)**0.5 for s in score_models_std[i].values()]
             mean_score_models[i] = np.min(means_score)
+            stds_score_models[i] = stds_score[np.argmin(means_score)]
 
             # print(c.r, score_models[i], c.d)
             # print(list(score_models[i].keys()))
@@ -174,7 +185,7 @@ def makePlotAnalyse(ana, score):
 
             mean_score_names[i] = list(score_models[i].keys())[np.argmin(means_score)]
 
-        plt.plot(x, mean_score_models, color="k", marker='*', linestyle="-", label=f"Best average")
+        plt.errorbar(x+decalages[-1], mean_score_models, yerr=stds_score_models, color="k", marker='*', linestyle="", label=f"Best average")
         plt.axhline(np.min(mean_score_models), color="k", linestyle=":", label=mean_score_names[np.argmin(mean_score_models)])
 
         plt.legend()
