@@ -142,6 +142,7 @@ def makePlotAnalyse(ana, score):
             
             l_min = np.zeros(len(ns)).astype(str)
             y_min = np.zeros(len(ns))
+            y_std = np.zeros(len(ns))
             y_mean = np.zeros(len(ns))
 
 
@@ -154,6 +155,7 @@ def makePlotAnalyse(ana, score):
 
                 l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
                 y_min[i] = np.min(a[n][test])
+                y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])]
                 y_mean[i] = np.mean(a[n][test])
 
             # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
