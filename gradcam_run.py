@@ -122,6 +122,7 @@ if __name__ == "__main__":
     if "noS" in sys.argv : image_brut[:, 500:600] = 0 
     image_tensor = torch.tensor(image_brut, dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
 
+
     # define target layers
     if Args.model == "SCaM" : target_layers = [model.conv3]
     else : raise Exception(f"{c.r}WARNING : target layers for model architecture {Args.model} not define{c.d}")
