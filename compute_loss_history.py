@@ -22,8 +22,6 @@ def work_on(lock='', bans=list()):
 
 				name = f"{model}_{filename}"[:-4]
 
-				print(name)
-
 				if lock in name and np.sum([ban in name for ban in bans]) == 0:
 					
 					file = f"{path_of_npy}/{model}/{fold}/{filename}"
