@@ -122,7 +122,7 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
 
                 ana.k2t[name]["l2xy"][poss] = [yi, i]
 
-    ana.k2t[name]["tab"] = np.zeros((len(ana.k2t[name]["y"]), len(ana.k2t[name]["x"])))
+    ana.k2t[name]["tab"] = np.zeros((len(ana.k2t[name]["y"]), len(ana.k2t[name]["x"]))) * np.nan
 
 
 
@@ -230,14 +230,14 @@ def makePlotAnalyse(ana, score, idec=0.1):
 
         plt.legend()
         plt.title(f"{k}")
-        plt.xticks(np.arange(len(ns)), ns)
+        plt.xticks(np.arange(len(ns)), [lab.replace("_", "") for lab in ns])
         plt.yscale("log")
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
         plt.close()
 
 
         # Tab figure
-        df = pd.DataFrame(ana.k2t[k]["tab"], index=ana.k2t[k]["y"], columns=ana.k2t[k]["x"])
+        df = pd.DataFrame(ana.k2t[k]["tab"], index=ana.k2t[k]["y"], columns=[lab.replace("_", "") for lab in ana.k2t[k]["x"]])
 
         print(df)
 
