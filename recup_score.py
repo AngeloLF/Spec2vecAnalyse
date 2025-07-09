@@ -235,8 +235,8 @@ def makePlotAnalyse(ana, score, idec=0.1):
 
         df_def = pd.DataFrame(ana.k2t[k]["tab"], index=ana.k2t[k]["y"], columns=[lab.replace("_", "") for lab in ana.k2t[k]["x"]])
         row_vide = pd.DataFrame([[np.nan]*df_def.shape[1]],         columns=df_def.columns, index=[''])
-        row_mean = pd.DataFrame(np.mean(ana.k2t[k]["tab"], axis=0), columns=df_def.columns, index=['Mean'])
-        row_min  = pd.DataFrame(np.min(ana.k2t[k]["tab"], axis=0),  columns=df_def.columns, index=['Min'])
+        row_mean = pd.DataFrame([np.mean(ana.k2t[k]["tab"], axis=0)], columns=df_def.columns, index=['Mean'])
+        row_min  = pd.DataFrame([np.min(ana.k2t[k]["tab"], axis=0)],  columns=df_def.columns, index=['Min'])
 
         df = pd.concat([df_def, row_vide, row_mean, row_min])
 
