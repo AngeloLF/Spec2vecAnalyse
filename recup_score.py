@@ -280,6 +280,8 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
         for color_palette, palette in colors.items():
 
+            valSpectractor = None
+
             for zoom, zoom_str in [(lignes4graph, ""), (lignes4graph[:16], "zoom_")]:
 
                 plt.figure(figsize=(19, 10))
@@ -295,13 +297,14 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
                         elif color_palette == "learningRate" and pal == name[-5:] : color = col
 
                     plt.plot(xg, yg, color=color)
-
                     plt.scatter([i], yg[-1], color=color, marker="s")
-                
 
+                    if "Spectractor_A" in name and valSpectractor is None : valSpectractor = y[i][-3]
+                
                 for pal, col in palette.items():
                     plt.scatter([], [], color=col, marker='s', label=pal.replace("_", ""))
 
+                if valSpectractor is not None : plt.axhline(valSpectractor, color='k', linestyle=':')
                 plt.xticks(np.arange(len(zoom)), zoom, rotation=90)
                 plt.tight_layout()
                 plt.yscale("log")
