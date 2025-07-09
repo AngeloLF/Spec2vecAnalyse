@@ -251,7 +251,7 @@ def makePlotAnalyse(ana, score, idec=0.1):
         plt.figure(figsize=(12, 12))
         axs = sns.heatmap(df, annot=True, fmt=".3f", cmap='coolwarm', vmax=vmax)
 
-        rect = patches.Rectangle((np.argmin(dfmin), df_def.shape[0]), 1, 1, fill=False, edgecolor='k', linewidth=3)
+        rect = patches.Rectangle((np.argmin(dfmin), df.shape[0]), 1, 1, fill=False, edgecolor='k', linewidth=3)
         axs.add_patch(rect)
 
         plt.title(f"{k}")
