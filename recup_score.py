@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 import coloralf as c
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 from types import SimpleNamespace
 import seaborn as sns
 import pandas as pd
