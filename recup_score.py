@@ -218,11 +218,6 @@ def makePlotAnalyse(ana, score, idec=0.1):
             mean_score_models[i] = np.min(means_score)
             stds_score_models[i] = stds_score[np.argmin(means_score)]
 
-            # print(c.r, score_models[i], c.d)
-            # print(list(score_models[i].keys()))
-            # print(c.g, means_score, c.d)
-            # print(c.b, np.argmin(means_score), c.d)
-
             mean_score_names[i] = list(score_models[i].keys())[np.argmin(means_score)]
 
         plt.errorbar(x+decalages[-1], mean_score_models, yerr=stds_score_models, color="k", marker='*', linestyle="", label=f"Best average")
@@ -239,8 +234,8 @@ def makePlotAnalyse(ana, score, idec=0.1):
         # Tab figure
         df = pd.DataFrame(ana.k2t[k]["tab"], index=ana.k2t[k]["y"], columns=[lab.replace("_", "") for lab in ana.k2t[k]["x"]])
 
-        if score == "L1" : vmax = min(np.max(ana.k2t[k]["tab"]), 3.0)
-        elif score == "chi2" : vmax = min(np.max(ana.k2t[k]["tab"]), 2.0)
+        if score == "L1" : vmax = min(np.nanmax(ana.k2t[k]["tab"]), 3.0)
+        elif score == "chi2" : vmax = min(np.nanmax(ana.k2t[k]["tab"]), 2.0)
         else : raise Exception(f"Score {score} unknow")
 
         plt.figure(figsize=(12, 12))
