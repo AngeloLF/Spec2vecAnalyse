@@ -4,7 +4,8 @@ from tqdm import tqdm
 import coloralf as c
 import matplotlib.pyplot as plt
 from types import SimpleNamespace
-
+import seaborn as sns
+import pandas as pd
 
 
 
@@ -106,12 +107,12 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
 
     for poss in inSetPreds:
 
-        for i, a in listOfArgs:
+        for i, a in enumerate(listOfArgs):
 
             if a in poss:
 
                 awu = a.replace("_", "")
-                y = poss.replace(a, "***")
+                y = poss.replace(awu, "***")
 
                 if y not in ana.k2t[name]["y"]:
 
@@ -121,8 +122,7 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
 
                 ana.k2t[name]["l2xy"][poss] = [yi, i]
 
-    print(f"\n{c.g}Test pour name {name}{c.d}")
-    print(ana.k2t[name])
+    ana.k2t[name]["tab"] = np.zeros((len(ana.k2t[name]["y"]), len(ana.k2t[name]["x"])))
 
 
 
@@ -150,6 +150,16 @@ def addValueInAnalyse(ana, model, otest, m, s):
                         ana.k2a[k][a][otest].append(m)
                         ana.k2s[k][a][otest].append(s)
                         ana.k2l[k][a][otest].append(model)
+
+
+def addMeanValueInAnalyse(ana, model, m):
+
+    for k, t in ana.k2t.items():
+
+        if model in t["l2xy"].keys():
+
+            yi, xi = t["l2xy"][model]
+            t["tab"][yi, xi] = m
 
 
 
@@ -224,6 +234,19 @@ def makePlotAnalyse(ana, score, idec=0.1):
         plt.yscale("log")
         plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
         plt.close()
+
+
+        # Tab figure
+        df = pd.DataFrame(ana.k2t[k]["l2xy"], index=ana.k2t[k]["y"], columns=ana.k2t[k]["x"])
+        plt.figure(figsize=(12, 12))
+        sns.heatmap(df, annot=True, fmt=".3f", cmap='coolwarm')
+
+        plt.title(f"{k}")
+        plt.tight_layout()
+        plt.savefig(f"./results/analyse/all_resume/graph/TABLEAU_classic_{score}_{k}.png")
+        plt.close()
+
+
 
 
 
@@ -429,6 +452,8 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
                 if score == "L1"     : x[i, m, -3] = f"{mom:.2f} ~ {soa:.2f}"
                 elif score == "chi2" : x[i, m, -3] = f"{mom:.6f} ~ {soa:.6f}"
                 else : raise Exception(f"Score {score} unknow")
+
+                if i == 0 : addMeanValueInAnalyse(ana, model, mom)
 
         for i in range(2):
 
