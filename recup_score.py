@@ -64,6 +64,11 @@ def initAnalyse(tests, colors):
         k2a : SCaM_by_loss -> {"chi2": {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}, 
                                "MSE" : {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]},
                                "L1N" : {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}}
+
+        k2t : SCaM_by_loss -> {"x"    : ["chi2", "MSE" "L1N"],
+                               "y"    : ["SCaM_***_train8k_1e-03", ...],
+                               "l2xy" : {"SCaM_MSE_train8k_1e03":[1, 2], ...}, }
+
         k2p : SCaM_by_loss -> ["SCaM_chi2_train2k_1e-6", ...]
     """
 
@@ -72,6 +77,7 @@ def initAnalyse(tests, colors):
     ANA.k2s = dict() # float std
     ANA.k2l = dict() # 
     ANA.k2p = dict() # 
+    ANA.k2t = dict() # 
     ANA.tests = tests
     ANA.colors = colors
 
@@ -83,6 +89,7 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
     ana.k2a[name] = dict()
     ana.k2s[name] = dict()
     ana.k2l[name] = dict()
+    ana.k2t[name] = {"x" : listOfArgs, "y":list(), "l2xy":dict()}
     ana.k2p[name] = inSetPreds
 
     for a in listOfArgs:
@@ -95,6 +102,29 @@ def addAnalyse(ana, name, inSetPreds, listOfArgs):
             ana.k2a[name][a][test] = list()
             ana.k2l[name][a][test] = list()
             ana.k2s[name][a][test] = list()
+
+
+    for poss in inSetPreds:
+
+        for i, a in listOfArgs:
+
+            if a in poss:
+
+                awu = a.replace("_", "")
+                y = poss.replace(a, "***")
+
+                if y not in ana.k2t[name]["y"]:
+
+                    ana.k2t[name]["y"].append(y)
+
+                yi = ana.k2t[name]["y"].index(y)
+
+                ana.k2t[name]["l2xy"][poss] = [yi, i]
+
+    print(f"\n{c.g}Test pour name {name}{c.d}")
+    print(ana.k2t[name])
+
+
 
 
 def addValueInAnalyse(ana, model, otest, m, s):
@@ -444,8 +474,8 @@ def possibility(models, losses, trains, lrs, loads=[None]):
 
     for model in models:
         for loss in losses:
-            for train in trains:
-                for lr in lrs:
+            for lr in lrs:
+                for train in trains:
                     for load in loads:
 
                         pred = f"pred_{model}_{loss}_{train}_{lr}"
