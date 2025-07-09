@@ -264,7 +264,7 @@ def makePlotAnalyse(ana, score, idec=0.1):
 
 
 
-def generate_html_table(colonnes, ligness, text, y, sorting=False, marker='.', savefig_name=None, markers=None, colors=None, score=None):
+def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', savefig_name=None, markers=None, colors=None, score=None):
 
 
     if sorting:
