@@ -300,7 +300,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
                 
 
                 for pal, col in palette.items():
-                    plt.scatter([], [], color=col, marker='s', label=pal)
+                    plt.scatter([], [], color=col, marker='s', label=pal.replace("_", ""))
 
                 plt.xticks(np.arange(len(zoom)), zoom, rotation=90)
                 plt.tight_layout()
@@ -549,7 +549,7 @@ if __name__ == "__main__":
     colors = {
         "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g", "Spectractor":"k"},
         "metric"       : {"chi2" : "r", "MSE" : "b", "L1N" : "g", "Spectractor":"k"},
-        "trainingType" : {"kwc_":"darkred", "kwcno0":"r", "kwcPXno0":"b", "kno0":"g", "k_":"gray", "Spectractor":"k"},
+        "trainingType" : {"kwc_":"darkred", "kwcno0_":"r", "kwcPX_":"darkblue", "kwcPXno0_":"b", "kno0_":"g", "k_":"gray", "Spectractor":"k"},
         "trainNk"      : {"16k" : "g", "8k" : "b", "4k" : "r", "2k" : "gray", "Spectractor":"k"},
         "learningRate" : {"1e-06":"magenta", "5e-06":"b", "1e-05":"g", "5e-05":"yellow", "1e-04":"orange", "1e-03":"red", "1e-02":"darkred", "Spectractor":"k"}
     }
