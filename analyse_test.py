@@ -44,7 +44,7 @@ def compute_score_L1(true, pred, sim, num_spec_str):
 
 
 
-def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, SpectractorProcess=False):
+def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, SpectractorProcess=True):
 
     fact_n = np.max(true) / np.max(pred)
     pred_n = pred * fact_n
@@ -75,7 +75,7 @@ def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, Spectrac
     score_n = np.sum(np.abs(chi2eq_n)) / N
 
     # reduc for spectractor
-    if Args.model == "Spectractor" and score > 50 and SpectractorProcess:
+    if Args.model == "Spectractor" and score > 20 and SpectractorProcess:
         score = np.nan
         score_n = np.nan
 
