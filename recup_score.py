@@ -264,7 +264,7 @@ def makePlotAnalyse(ana, score, idec=0.1):
 
 
 
-def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', savefig_name=None, markers=None, colors=None, score=None):
+def generate_html_table(colonnes, ligness, text, y, sorting=False, marker='.', savefig_name=None, markers=None, colors=None, score=None):
 
 
     if sorting:
@@ -273,13 +273,14 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
         y = y[index]
         text = text[index]
-        lignes = [lignes[i] for i in index if not ("cal" in lignes[i] and not "wc" in lignes[i])]
+        lignes = [ligness[i] for i in index]
+        lignes4graph = [ligness[i] for i if not ("cal" in ligness[i] and not "wc" in ligness[i])]
 
         # y[y == np.inf] = np.nan
 
         for color_palette, palette in colors.items():
 
-            for zoom, zoom_str in [(lignes, ""), (lignes[:16], "zoom_")]:
+            for zoom, zoom_str in [(lignes4graph, ""), (lignes4graph[:16], "zoom_")]:
 
                 plt.figure(figsize=(19, 10))
 
