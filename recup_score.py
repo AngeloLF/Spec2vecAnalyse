@@ -274,7 +274,7 @@ def generate_html_table(colonnes, ligness, text, y, sorting=False, marker='.', s
         y = y[index]
         text = text[index]
         lignes = [ligness[i] for i in index]
-        lignes4graph = [ligness[i] for i if not ("cal" in ligness[i] and not "wc" in ligness[i])]
+        lignes4graph = [ligness[i] for i in index if not ("cal" in ligness[i] and not "wc" in ligness[i])]
 
         # y[y == np.inf] = np.nan
 
