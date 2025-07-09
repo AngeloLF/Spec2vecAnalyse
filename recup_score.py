@@ -239,6 +239,8 @@ def makePlotAnalyse(ana, score, idec=0.1):
         # Tab figure
         df = pd.DataFrame(ana.k2t[k]["l2xy"], index=ana.k2t[k]["y"], columns=ana.k2t[k]["x"])
 
+
+        print(ana.k2t[k]["l2xy"])
         print(df)
 
         plt.figure(figsize=(12, 12))
