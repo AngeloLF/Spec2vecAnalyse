@@ -282,7 +282,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
             valSpectractor = None
 
-            for zoom, zoom_str in [(lignes4graph, ""), (lignes4graph[:16], "zoom_")]:
+            for zoom, zoom_str in [(lignes4graph, ""), (lignes4graph[:32], "zoom_")]:
 
                 plt.figure(figsize=(19, 10))
 
