@@ -239,10 +239,12 @@ def makePlotAnalyse(ana, score, idec=0.1):
         # Tab figure
         df = pd.DataFrame(ana.k2t[k]["tab"], index=ana.k2t[k]["y"], columns=[lab.replace("_", "") for lab in ana.k2t[k]["x"]])
 
-        print(df)
+        if score == "L1" : vmax = min(np.max(ana.k2t[k]["tab"]), 3.0)
+        elif score == "chi2" : vmax = min(np.max(ana.k2t[k]["tab"]), 2.0)
+        else : raise Exception(f"Score {score} unknow")
 
         plt.figure(figsize=(12, 12))
-        sns.heatmap(df, annot=True, fmt=".3f", cmap='coolwarm')
+        sns.heatmap(df, annot=True, fmt=".3f", cmap='coolwarm', vmax=vmax)
 
         plt.title(f"{k}")
         plt.tight_layout()
@@ -384,7 +386,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
         addAnalyse(ana, "ANALYSE_SCaM_by_16k_calib", set2, ["~wc", "wc"])
         addAnalyse(ana, "ANALYSE_SCaM_by_16k_no0",   set2, ["~no0", "no0"])
 
-        set3 = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-6"])
+        set3 = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
         addAnalyse(ana, "ANALYSE_by_Models", set3, ["SCaM_", "SCaMv2_", "SotSu_", "SotSuv2_", "CaTS_", "CaTSv2_"])
 
 
