@@ -233,10 +233,13 @@ def makePlotAnalyse(ana, score, idec=0.1):
 
         # Tab figure
 
+        dfmean = np.mean(ana.k2t[k]["tab"], axis=0)
+        dfmin  = np.min(ana.k2t[k]["tab"], axis=0)
+
         df_def = pd.DataFrame(ana.k2t[k]["tab"], index=ana.k2t[k]["y"], columns=[lab.replace("_", "") for lab in ana.k2t[k]["x"]])
-        row_vide = pd.DataFrame([[np.nan]*df_def.shape[1]],         columns=df_def.columns, index=[''])
-        row_mean = pd.DataFrame([np.mean(ana.k2t[k]["tab"], axis=0)], columns=df_def.columns, index=['Mean'])
-        row_min  = pd.DataFrame([np.min(ana.k2t[k]["tab"], axis=0)],  columns=df_def.columns, index=['Min'])
+        row_vide = pd.DataFrame([[np.nan]*df_def.shape[1]], columns=df_def.columns, index=[''])
+        row_mean = pd.DataFrame([dfmean],                   columns=df_def.columns, index=['Mean'])
+        row_min  = pd.DataFrame([dfmin],                    columns=df_def.columns, index=['Min'])
 
         df = pd.concat([df_def, row_vide, row_mean, row_min])
 
@@ -245,7 +248,10 @@ def makePlotAnalyse(ana, score, idec=0.1):
         else : raise Exception(f"Score {score} unknow")
 
         plt.figure(figsize=(12, 12))
-        sns.heatmap(df, annot=True, fmt=".3f", cmap='coolwarm', vmax=vmax)
+        axs = sns.heatmap(df, annot=True, fmt=".3f", cmap='coolwarm', vmax=vmax)
+
+        rect = patches.Rectangle((np.argmin(dfmin), df_def.shape[0]), 1, 1, fill=False, edgecolor='k', linewidth=3)
+        axs.add_patch(rect)
 
         plt.title(f"{k}")
         plt.tight_layout()
