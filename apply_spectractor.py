@@ -14,7 +14,7 @@ from spectractor import parameters
 
 
 def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini", 
-            makeonly=None, maxloop=2):
+            makeonly=None, maxloop=1):
 
     testdir = f"{pathtest}/{testname}"
     pred = f"pred_Spectractor_x_x_0e+00"

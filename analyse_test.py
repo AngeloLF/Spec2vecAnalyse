@@ -240,6 +240,7 @@ def plot_chi2eq(ax, chi2eq):
     ax.set_ylabel(f"${title}$")
     ax.set_xticks([]) # Remove x-ticks
     ax.set_yticks([]) # Remove y-ticks
+    plt.colorbar()
 
 
 
