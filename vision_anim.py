@@ -51,9 +51,9 @@ def makeAnim(back, gcams, path_save, preds, true, x=np.arange(300, 1100, 1), sav
 
     mean_visions = np.mean(gcams, axis=0)
     # vmax = max([np.max(gcams[i][:, 128:]) for i in range(len(gcams))])/10
-    vmax = np.max(mean_visions)/3
+    vmax = np.max(mean_visions)
 
-    convoluted = gaussian_filter(gcams[0], sigma=(3.0, 3.0), mode='reflect')
+    convoluted = gcams[0] # gaussian_filter(gcams[0], sigma=(3.0, 3.0), mode='reflect')
 
 
     b = ax[0].imshow(np.log10(back+1), cmap="gray")
@@ -76,7 +76,8 @@ def makeAnim(back, gcams, path_save, preds, true, x=np.arange(300, 1100, 1), sav
         pbar.update(1)
 
         # update image
-        g.set_array(gaussian_filter(gcams[frame], sigma=(3.0, 3.0), mode='reflect'))
+        # g.set_array(gaussian_filter(gcams[frame], sigma=(3.0, 3.0), mode='reflect'))
+        g.set_array(gcams[frame])
 
         # update pred target
         new_coords = np.array([[x[x_frame[frame]], pred[x_frame[frame]]]])

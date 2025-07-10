@@ -303,8 +303,12 @@ def open_fold(args, paths, folds, nb_level=5):
             else:
                 sim.psf_function['arg'][0][0] = vp[param][n]
 
-        pred = np.load(f"{paths.test}/{folds.pred_folder}/{file}")
         true = np.load(f"{paths.test}/{Args.folder_output}/{file}")
+
+        try:
+            pred = np.load(f"{paths.test}/{folds.pred_folder}/{file}")
+        except:
+            pred = np.zeros_like(true) * np.nan
 
         res["flux"][i] = np.sum(true) / hp["CCD_GAIN"] # e- / (e-/ADU) = flux in ADU
 
