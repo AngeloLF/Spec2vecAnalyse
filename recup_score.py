@@ -207,6 +207,10 @@ def makePlotAnalyse(ana, score, idec=0.1):
                     if m not in score_models_std[i] : score_models_std[i][m] = list()
                     score_models_std[i][m].append(ana.k2s[k][n][test][j]/2)
 
+                print(f"\n\n---")
+                print(np.argmin(a[n][test]))
+                print(ana.k2l[k][n][test])
+
                 l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
                 y_min[i] = np.min(a[n][test])
                 y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])] / 2
