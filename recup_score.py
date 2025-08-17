@@ -207,7 +207,7 @@ def makePlotAnalyse(ana, score, idec=0.1):
                     if m not in score_models_std[i] : score_models_std[i][m] = list()
                     score_models_std[i][m].append(ana.k2s[k][n][test][j]/2)
 
-                print(f"\n\n---")
+                print(f"\n\n--- : {a[n][test]}")
                 print(np.argmin(a[n][test]))
                 print(ana.k2l[k][n][test])
 
