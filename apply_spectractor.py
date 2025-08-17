@@ -133,7 +133,7 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
                         spectractor_ok = True
                         ypi = np.zeros_like(xt) * np.nan
                         fact = 1.0
-                        print(f"{c.r}Make mean yt ....{c.d}")
+                        print(f"{c.r}Make nan yt ....{c.d}")
 
             times[n] = time() - t0
 

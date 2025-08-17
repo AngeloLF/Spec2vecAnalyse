@@ -417,6 +417,8 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
         
         for m, model in enumerate(models):
 
+            print(model)
+
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
