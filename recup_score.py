@@ -21,7 +21,7 @@ def recup_mt(score, mode="dispo"):
         setA = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
         setB = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
-        models = list(set(setA+setB))
+        models = list(set(setA+setB+["Spectractor_x_x_0e+00"]))
 
 
     elif mode == "all":
