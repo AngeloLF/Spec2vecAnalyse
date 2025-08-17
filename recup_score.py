@@ -307,7 +307,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
                     plt.plot(xg, yg, color=color)
                     plt.scatter([i], yg[-1], color=color, marker="s")
 
-                    if "Spectractor_A" in name and valSpectractor is None : valSpectractor = y[i][-3]
+                    if "Spectractor_x" in name and valSpectractor is None : valSpectractor = y[i][-3]
                 
                 for pal, col in palette.items():
                     plt.scatter([], [], color=col, marker='s', label=pal.replace("_", ""))
