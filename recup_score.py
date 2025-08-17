@@ -16,7 +16,7 @@ def recup_mt(score, mode="dispo"):
 
     if mode == "dispo":
 
-        models = os.listdir(f"./results/analyse/{score}")
+        models = [m for m in os.listdir(f"./results/analyse/{score}") if not "." in m]
 
 
 
