@@ -135,7 +135,7 @@ if __name__ == "__main__":
                 e[i][j] = s
                 x[i][j] = f"{m:.3f} ~ {s:.3f}"
 
-                y[i][-1] += np.abs(m - MIN) / (MAX - MIN) / 3 * 100
+                y[i][-1] += m / (MAX - MIN) / 3 * 100
 
             x[i][-1] = f"{y[i][-1]:.2f} %"
 
