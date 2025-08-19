@@ -18,10 +18,10 @@ def recup_mt(score, mode="dispo"):
 
         models = [m for m in os.listdir(f"./results/analyse/{score}") if not "." in m]
 
-        setA = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-        setB = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+        # setA = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+        # setB = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
-        models = list(set(setA+setB+["pred_Spectractor_x_x_0e+00"]))
+        # models = list(set(setA+setB+["pred_Spectractor_x_x_0e+00"]))
 
 
     elif mode == "all":
@@ -401,10 +401,10 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
         addAnalyse(ana, "ANALYSE_SCaM_by_train", set1, ["train2k", "train4k", "train8k", "train16k"])
         addAnalyse(ana, "ANALYSE_SCaM_by_lr",    set1, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
 
-        # set2 = possibility(models=["SCaM"], losses=["chi2"], trains=["train16k", "train16kno0", "train16kwc", "train16kwcno0", "train16kwcPX", "train16kwcPXno0"], lrs=["1e-04", "5e-05", "1e-05", "5e-06"])
-        # addAnalyse(ana, "ANALYSE_SCaM_by_16k_all",   set2, ["16k_", "16kno0_", "16kwc_", "16kwcno0_", "16kwcPX_", "16kwcPXno0_"])
-        # addAnalyse(ana, "ANALYSE_SCaM_by_16k_calib", set2, ["~wc", "wc"])
-        # addAnalyse(ana, "ANALYSE_SCaM_by_16k_no0",   set2, ["~no0", "no0"])
+        set2 = possibility(models=["SCaM"], losses=["chi2"], trains=["train16k", "train16kno0", "train16kwc", "train16kwcno0", "train16kwcPX", "train16kwcPXno0"], lrs=["1e-04", "5e-05", "1e-05", "5e-06"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_16k_all",   set2, ["16k_", "16kno0_", "16kwc_", "16kwcno0_", "16kwcPX_", "16kwcPXno0_"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_16k_calib", set2, ["~wc", "wc"])
+        addAnalyse(ana, "ANALYSE_SCaM_by_16k_no0",   set2, ["~no0", "no0"])
 
         set3 = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
         addAnalyse(ana, "ANALYSE_by_Models", set3, ["SCaM_", "SCaMv2_", "SotSu_", "SotSuv2_", "CaTS_", "CaTSv2_"])
