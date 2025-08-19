@@ -107,6 +107,8 @@ if __name__ == "__main__":
 
 
         rangeParam = train_params[f"ATM_{atmop.upper()}"]
+        asort = np.argsort(vt)
+        diff = vt - vp
 
 
         fig, (ax1, ax2) = plt.subplots(2, 1, sharex=True, figsize=(12, 6), gridspec_kw={'height_ratios': [3, 1]})
@@ -115,13 +117,13 @@ if __name__ == "__main__":
         ax1.axhline(rangeParam[0], color='green', linestyle=':')
         ax1.axhline(rangeParam[1], color='green', linestyle=':')
 
-        ax1.plot(vt[np.argsort(vt)], color='g', label="True")
-        ax1.plot(vp[np.argsort(vp)], color='r', label="Pred")
+        ax1.plot(vt[asort], color='g', label="True")
+        ax1.plot(vp[asort], color='r', label="Pred")
 
         ax1.set_ylabel(atmop)
         ax1.legend()
 
-        ax2.plot(vt-vp, color='k')
+        ax2.plot(diff[asort], color='k')
         ax2.set_ylabel("Residus")
         ax2.set_xlabel("Num test")
 
@@ -132,8 +134,7 @@ if __name__ == "__main__":
 
 
         plt.figure(figsize=(12, 8))
-        
-        diff = vt-vp
+    
         sco = np.sum(np.abs(diff)) / n
         std = np.std(np.abs(diff))
 
