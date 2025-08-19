@@ -30,7 +30,19 @@ if __name__ == "__main__":
     if "output" in Args.test : folders = [f"{path_test}/{Args.test}/{sf}" for sf in os.listdir(f"{path_test}/{Args.test}") if "test" in sf]
     else :                     folders = [f"{path_test}/output_simu/{Args.test}"]
 
-    
+    if Args.loss in ["MSEn"]:
+
+        with open(f"{train_path}/variable_params.pck", 'rb') as f:
+            vp = pickle.load(f)
+        ozone, pwv, aerosols = vp["ATM_OZONE"], vp["ATM_PWV"], vp["ATM_AEROSOLS"]
+        oms = (np.mean(ozone), np.std(ozone) + 1e-8)
+        pms = (np.mean(pwv), np.std(pwv) + 1e-8)
+        ams = (np.mean(aerosols), np.std(aerosols) + 1e-8)
+
+        mu    = np.array([oms[0], pms[0], ams[0]])
+        sigma = np.array([oms[1], pms[1], ams[1]])
+
+
     
     ### Apply 
 
@@ -58,6 +70,9 @@ if __name__ == "__main__":
                 test_image = img.unsqueeze(0).to(device)
                 t0 = time()
                 pred = model(test_image).cpu().numpy()[0]
+
+                if Args.loss in ["MSEn"] : pred = pred * sigma + mu
+
                 t0s.append(time()-t0)
 
                 np.save(f"{fold}/{pred_fold_name}/{true_spec_name}", pred)
