@@ -100,7 +100,10 @@ if __name__ == "__main__":
         op[i], pp[i], ap[i] = pi
 
 
-    for atmop, vt, vp in [("Ozone", ot, op), ("PWV", pt, pp), ("Aerosols", at, ap)]:
+
+    resume = dict()
+
+    for i, (atmop, vt, vp) in enumerate([("Ozone", ot, op), ("PWV", pt, pp), ("Aerosols", at, ap)]):
 
 
         rangeParam = train_params[f"ATM_{atmop.upper()}"]
@@ -132,12 +135,26 @@ if __name__ == "__main__":
         
         diff = vt-vp
         sco = np.sum(np.abs(diff)) / n
+        std = np.std(np.abs(diff))
 
         plt.hist(diff, color='r', edgecolor='k', bins=50)
         plt.title(f"Hist of {atmop} error : {sco:.4f}")
 
         plt.savefig(f"{Paths.save}/hist_{atmop}.png")
         plt.close()
+
+        resume[atmop.lower()] = [sco, std]
+
+
+
+        with open(f"{Paths.save}/resume.json", 'w') as f:
+            json.dump(resume, f, indent=4)
+
+
+
+
+
+
 
 
 
