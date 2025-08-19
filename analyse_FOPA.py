@@ -115,8 +115,8 @@ if __name__ == "__main__":
         ax1.axhline(rangeParam[0], color='green', linestyle=':')
         ax1.axhline(rangeParam[1], color='green', linestyle=':')
 
-        ax1.plot(vt, color='g', label="True")
-        ax1.plot(vp, color='r', label="Pred")
+        ax1.plot(vt[np.argsort(vt)], color='g', label="True")
+        ax1.plot(vp[np.argsort(vp)], color='r', label="Pred")
 
         ax1.set_ylabel(atmop)
         ax1.legend()
