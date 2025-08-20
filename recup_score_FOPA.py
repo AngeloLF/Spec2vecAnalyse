@@ -144,9 +144,12 @@ if __name__ == "__main__":
 
         pbar.update()
 
-    asort = np.argsort(y[:, -2])
-    y[:, -1] = asort
-    x[:, -1] = asort.astype(str)
+    order = np.zeros(n)
+    for m, cl in enumerate(np.argsort(y[:, -2])):
+        order[cl] = m
+
+    y[:, -1] = order
+    x[:, -1] = order.astype(str)
     e[:, -1] = 0.0
 
 
