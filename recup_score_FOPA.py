@@ -153,5 +153,5 @@ if __name__ == "__main__":
         with open(f"{path_resume}/{score}{sorting_str}.html", "w") as f:
 
             html_codes = [f"<h1>Score {score}</h1>"]
-            html_codes.append(generate_html_table(tests+["Final Score"], models, x, y, sorting=sorting))
+            html_codes.append(generate_html_table(tests+["Final Score", "Classement"], models, x, y, sorting=sorting))
             f.write('\n'.join(html_codes))
