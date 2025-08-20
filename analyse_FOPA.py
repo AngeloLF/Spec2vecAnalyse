@@ -96,8 +96,15 @@ if __name__ == "__main__":
         ti = np.load(f"{Paths.test}/opa/{file}")
         pi = np.load(f"{Paths.test}/{Folds.pred_folder}/{file}")
 
-        ot[i], pt[i], at[i] = ti
-        op[i], pp[i], ap[i] = pi
+        if "FOPA" in Args.model:
+
+            ot[i], pt[i], at[i] = ti
+            op[i], pp[i], ap[i] = pi
+
+        elif "FOBIQ" in Args.model:
+
+            ot[i] = ti[0]
+            op[i] = pi[0]
 
 
 
