@@ -1,13 +1,14 @@
 import numpy as np
 import os, sys, json, shutil
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 def generate_html_table(colonnes, lignes, text, y, sorting=False):
 
 
     if sorting:
 
-        index = np.argsort(y[:, -1])
+        index = np.argsort(y[:, -2])
 
         y = y[index]
         text = text[index]
@@ -102,6 +103,8 @@ if __name__ == "__main__":
     x = np.zeros((n, len(tests)+2)).astype(str)
     x[:, :] = '---'
 
+    pbar = tqdm(total=n)
+
     for i, m in enumerate(models):
 
         if "trainAtmo" in m : foldtest = "testAtmo1k"
@@ -137,12 +140,14 @@ if __name__ == "__main__":
 
                 y[i][-2] += m / (MAX - MIN) / 3 * 100
 
-            x[i][-2] = f"{y[i][-1]:.2f} %"
+            x[i][-2] = f"{y[i][-2]:.2f} %"
 
-        asort = np.argsort(y[:, -2])
-        y[:, -1] = asort
-        x[:, -1] = asort.astype(str)
-        e[:, -1] = 0.0
+        pbar.update()
+
+    asort = np.argsort(y[:, -2])
+    y[:, -1] = asort
+    x[:, -1] = asort.astype(str)
+    e[:, -1] = 0.0
 
 
 
