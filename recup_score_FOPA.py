@@ -97,9 +97,9 @@ if __name__ == "__main__":
     models = [m for m in os.listdir(path_analyse) if not "." in m]
     n = len(models)
 
-    y = np.zeros((n, len(tests)+1)) + np.inf
-    e = np.zeros((n, len(tests)+1)) + np.inf
-    x = np.zeros((n, len(tests)+1)).astype(str)
+    y = np.zeros((n, len(tests)+2)) + np.inf
+    e = np.zeros((n, len(tests)+2)) + np.inf
+    x = np.zeros((n, len(tests)+2)).astype(str)
     x[:, :] = '---'
 
     for i, m in enumerate(models):
@@ -124,7 +124,7 @@ if __name__ == "__main__":
             with open(f"{path_analyse}/{m}/{foldtest}/resume.json", 'r') as f:
                 resume_i = json.load(f)
 
-            y[i][-1] = 0.0
+            y[i][-2] = 0.0
 
             for j, test in enumerate(tests):
 
@@ -135,9 +135,15 @@ if __name__ == "__main__":
                 e[i][j] = s
                 x[i][j] = f"{m:.3f} ~ {s:.3f}"
 
-                y[i][-1] += m / (MAX - MIN) / 3 * 100
+                y[i][-2] += m / (MAX - MIN) / 3 * 100
 
-            x[i][-1] = f"{y[i][-1]:.2f} %"
+            x[i][-2] = f"{y[i][-1]:.2f} %"
+
+        asort = np.argsort(y[:, -2])
+        y[:, -1] = asort
+        x[:, -1] = asort.astype(str)
+        e[:, -1] = 0.0
+
 
 
 
