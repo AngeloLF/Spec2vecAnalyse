@@ -103,7 +103,7 @@ if __name__ == "__main__":
 
         elif "FOBIQ" in Args.model:
 
-            ot[i] = ti[0]
+            ot[i], pt[i], at[i] = ti
             op[i] = pi[0]
 
 
