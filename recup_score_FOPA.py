@@ -149,7 +149,7 @@ if __name__ == "__main__":
         order[cl] = m
 
     y[:, -1] = order
-    x[:, -1] = order.astype(str)
+    x[:, -1] = order.astype(int).astype(str)
     e[:, -1] = 0.0
 
 
