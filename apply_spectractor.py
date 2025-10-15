@@ -127,7 +127,8 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
                     ypi = finterp(xt)
                     spectractor_ok = True
 
-                except:
+                except Exception as e:
+                    print(f"Exception : {e}")
                     print(f"{c.lr}WARNING : loop {loop}/{maxloop} extractor failed ...{c.d}")
                     if loop == maxloop:
                         spectractor_ok = True

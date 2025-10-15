@@ -197,7 +197,7 @@ def plot_spec(ax, yt, yp, varp, num_str):
     ax.plot(x, yp, c='r', label='Pred')
     plot_full_legend(ax, varp, n)
     ax.legend(fontsize=8)
-    ax.set_xlabel(f"$\lambda$ (nm)")
+    ax.set_xlabel(r"$\lambda$ (nm)")
     ax.set_ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_str}.npy")
 
 def plot_res(ax, yt, yp, norma=False):
@@ -211,7 +211,7 @@ def plot_res(ax, yt, yp, norma=False):
 
     ax.axhline(0, color='k', linestyle=':')
     ax.plot(x, res, '.k')
-    ax.set_xlabel(f"$\lambda$ (nm)")
+    ax.set_xlabel(r"$\lambda$ (nm)")
     ax.set_ylabel(ylabel)
 
     if norma :
@@ -339,7 +339,7 @@ def open_fold(args, paths, folds, nb_level=5):
     vmin = min(np.nanmin(res["classic"]), np.nanmin(res["norma"]))
     vmax = max(np.nanmax(res["classic"]), np.nanmax(res["norma"]))
     for mode, col in [("classic", "g"), ("norma", "r")]:
-        plt.hist(res[mode], bins=50, range=(vmin, vmax), color=col, alpha=0.8)
+        plt.hist(res[mode], bins=50, range=(vmin, vmax), color=col, alpha=0.8, label=mode)
     plt.xlabel(f"Score")
     plt.yscale("log")
     plt.legend()
@@ -432,7 +432,7 @@ if __name__ == "__main__":
     """
 
     tradargs = {
-        "arg.0.0" : f"PSF Moffat $\gamma$",
+        "arg.0.0" : r"PSF Moffat $\gamma$",
     }
 
 
