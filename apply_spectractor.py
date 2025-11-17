@@ -6,38 +6,45 @@ from scipy import interpolate
 from time import time
 import coloralf as c
 
-sys.path.append("./Spectractor")
+
+spectractor_version = "Spectractor" 
+for argv in sys.argv:
+    if "=" in argv and argv.split("=")[0] == "specver":
+        spectractor_version = argv.split("=")[1]
+sys.path.append(f"./{spectractor_version}")
 from spectractor.extractor import extractor
 from spectractor.extractor.spectrum import Spectrum
 from spectractor import parameters
 
 
 
-def openTest(testname, pathtest="./results/output_simu", varfile="variable_params.pck", hpjson="hparams.json", histjson="hist_params.json", config = "./Spectractor/config/ctio.ini", 
-            makeonly=None, maxloop=1):
+
+def openTest(testname, pathtest="./results/output_simu", configPath = "config/ctio.ini", 
+            makeonly=None, maxloop=1, specver="Spectractor", flipy=False):
+
+    config = f"./{specver}/{configPath}"
 
     testdir = f"{pathtest}/{testname}"
     pred = f"pred_Spectractor_x_x_0e+00"
 
-    with open(f"{testdir}/{hpjson}", "r") as fjson:
+    if flipy : print(f"{c.g}INFO : Flipy True{c.d}")
+    else : print(f"{c.y}INFO : Flipy False{c.d}")
+
+    with open(f"{testdir}/hparams.json", "r") as fjson:
         hp = json.load(fjson)
 
-    with open(f"{testdir}/{histjson}", "r") as fjson:
-        hs = json.load(fjson)
-
-    with open(f"{testdir}/{varfile}", "rb") as fpck:
-        vp = pickle.load(fpck)
+    vp = np.load(f"{testdir}/vparams.npz")
 
     images = np.sort([f"{testdir}/image/{fimage}" for fimage in os.listdir(f"{testdir}/image")])
 
-    gain, ron = hp["CCD_GAIN"], hs["CCD_READ_OUT_NOISE"]
+    gain, ron = hp["CCD_GAIN"], hp["cparams"]["CCD_READ_OUT_NOISE"]
     
     header = fits.Header()
     header["DISPERSER"] = hp["DISPERSER"]
-    header["EXPTIME"] = hs["EXPOSURE"]
-    header['OUTTEMP'] = hs["ATM_TEMPERATURE"]
+    header["EXPTIME"] = hp["cparams"]["EXPOSURE"]
+    header['OUTTEMP'] = hp["cparams"]["ATM_TEMPERATURE"]
     header['OUTPRESS'] = hp["OBS_PRESSURE"]
-    header['OUTHUM'] = hs["ATM_HUMIDITY"]
+    header['OUTHUM'] = hp["cparams"]["ATM_HUMIDITY"]
     header['XLENGTH'] = hp["SIM_NX"]
     header['YLENGTH'] = hp["SIM_NX"]
     header['XPIXSIZE'] = hp["CCD_PIXEL2ARCSEC"]
@@ -59,23 +66,24 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
         if fold in os.listdir(testdir) : shutil.rmtree(f"{testdir}/{fold}")
         os.mkdir(f"{testdir}/{fold}")
 
-    times = np.zeros(hs["nb_simu"])
+    times = np.zeros(hp["nsimu"])
 
-    for n in range(hs["nb_simu"]):
+    for n in range(hp["nsimu"]):
 
         if makeonly is None or int(makeonly) == n:
 
             header["TARGET"] = vp["TARGET"][n]
             header["AIRMASS"] = vp["ATM_AIRMASS"][n]
-            header["ANGLE"] = - vp["ROTATION_ANGLE"][n]
+            header["ANGLE"] = vp["ROTATION_ANGLE"][n]
+            if flipy : header["ANGLE"] *= -1
 
             print(f"\nMake {n}, with angle {header['ANGLE']}")
             
-            data = np.zeros((hp["SIM_NX"], hp["SIM_NX"])) + hs["BACKGROUND_LEVEL"] * hs["EXPOSURE"]
+            data = np.zeros((hp["SIM_NX"], hp["SIM_NX"])) + hp["cparams"]["BACKGROUND_LEVEL"] * hp["cparams"]["EXPOSURE"]
 
             d = np.copy(data).astype(np.float32) * gain
             noisy = np.random.poisson(d).astype(np.float32)
-            noisy += np.random.normal(scale=hs["CCD_READ_OUT_NOISE"]*np.ones_like(noisy)).astype(np.float32)
+            noisy += np.random.normal(scale=hp["cparams"]["CCD_READ_OUT_NOISE"]*np.ones_like(noisy)).astype(np.float32)
 
             data = noisy / gain
             min_noz = np.min(data[data > 0])
@@ -84,10 +92,14 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
             bande = int((hp["SIM_NX"] - hp["SIM_NY"])/2)
 
             if makeonly is None: 
-                data[bande:bande+hp["SIM_NY"], :] = np.load(images[n])[::-1, :]
+                if flipy : data[bande:bande+hp["SIM_NY"], :] = np.load(images[n]) # [::-1, :]
+                else : data[bande:bande+hp["SIM_NY"], :] = np.load(images[n])
+
                 true_name = images[n].split("_")[-1][:-4]
             else: 
-                data[bande:bande+hp["SIM_NY"], :] = np.load(f"{testdir}/image/image_{makeonly}.npy")[::-1, :]
+                if flipy : data[bande:bande+hp["SIM_NY"], :] = np.load(f"{testdir}/image/image_{makeonly}.npy") #[::-1, :]
+                else : data[bande:bande+hp["SIM_NY"], :] = np.load(f"{testdir}/image/image_{makeonly}.npy")
+
                 true_name = makeonly
 
             hdu = fits.PrimaryHDU(data=data.astype(np.float32), header=header)
@@ -158,8 +170,6 @@ def openTest(testname, pathtest="./results/output_simu", varfile="variable_param
 
 def viewResult(test_folder, name):
 
-    print(parameters.FLAM_TO_ADURATE)
-
     xt = np.arange(300, 1100)
     yt = np.load(f"./results/output_simu/{test_folder}/spectrum/spectrum_{name}.npy")
     yp = np.load(f"./results/output_simu/{test_folder}/pred_Spectractor_x_x_0e+00/spectrum_{name}.npy")
@@ -178,11 +188,13 @@ if __name__ == "__main__":
     makeonly = None
     test_folder = sys.argv[1]
 
+    flipy = False if "noflip" in sys.argv else True
+
     for arg in sys.argv[1:]:
 
         if arg[:9] == "makeonly=" : makeonly = arg[9:]
 
 
-    if not "view" in sys.argv : openTest(test_folder, makeonly=makeonly)
+    if not "view" in sys.argv : openTest(test_folder, makeonly=makeonly, specver=spectractor_version, flipy=flipy)
     else : viewResult(test_folder, makeonly)
 
