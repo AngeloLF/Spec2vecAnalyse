@@ -13,7 +13,8 @@ sys.path.append('./Spec2vecModels/')
 from get_argv import get_argv
 
 sys.path.append(f"./SpecSimulator")
-from simulator import SpecSimulator
+from specsimulator import SpecSimulator
+import hparams
 import utils_spec.psf_func as pf
 
 
@@ -260,20 +261,16 @@ def open_fold(args, paths, folds, nb_level=5):
 
     files = os.listdir(f"{paths.test}/{Args.folder_output}")
 
-    with open(f"{paths.test}/hist_params.json", 'r') as f:
-        params = json.load(f)
-
     with open(f"{paths.test}/hparams.json", "r") as f:
         hp = json.load(f)
 
-    with open(f"{paths.test}/variable_params.pck", "rb") as f:
-        vp = pickle.load(f)
-
-    res = {"classic" : np.zeros(params["nb_simu"]) * np.nan,
-           "norma"   : np.zeros(params["nb_simu"]) * np.nan,
-           "flux"    : np.zeros(params["nb_simu"]),
-           "file"    : np.zeros(params["nb_simu"]).astype(str),
-           "num"     : (np.zeros(params["nb_simu"]) * np.nan).astype(str)}
+    vp = np.load(f"{paths.test}/vparams.npz")
+     
+    res = {"classic" : np.zeros(hp["nsimu"]) * np.nan,
+           "norma"   : np.zeros(hp["nsimu"]) * np.nan,
+           "flux"    : np.zeros(hp["nsimu"]),
+           "file"    : np.zeros(hp["nsimu"]).astype(str),
+           "num"     : (np.zeros(hp["nsimu"]) * np.nan).astype(str)}
 
 
 
@@ -286,7 +283,8 @@ def open_fold(args, paths, folds, nb_level=5):
         'timbre' : pf.moffat2d_timbre,
     }
 
-    sim = SpecSimulator(psf_function=psf_function, savingFolders=False, target_set="setAll")
+    hpClass = hparams.HparamsFromJson(f"{paths.test}/hparams.json")
+    sim = SpecSimulator(hpClass, savingFolders=False)
     
 
 
@@ -419,10 +417,10 @@ if __name__ == "__main__":
 
     """
 
-    results |-- output_simu |-- Args.train --- hist_params.json
+    results |-- output_simu |-- Args.train --- hparams.json
             |               |-- Args.test  |-- <Folds.pred_folder>
             |                              |-- spectrum
-            |                              |-- hist_params.json
+            |                              |-- harams.json
             |                              |-- variable_params.pck
             |
             |
@@ -465,7 +463,7 @@ if __name__ == "__main__":
 
     # chargement des params du train
     try:
-        with open(f"{Paths.train}/hist_params.json", 'r') as f:
+        with open(f"{Paths.train}/hparams.json", 'r') as f:
             train_params = json.load(f)
     except:
         train_params = dict()
