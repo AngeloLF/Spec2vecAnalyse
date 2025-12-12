@@ -20,7 +20,10 @@ from spectractor.extractor.spectrum import Spectrum
 from spectractor import parameters
 from spectractor.simulation.adr import hadec2zdpar
 
-
+sys.path.append(f"./SpecSimulator")
+from specsimulator import SpecSimulator
+import hparams
+import utils_spec.psf_func as pf
 
 
 def openTest(testname, pathtest="./results/output_simu", makeonly=None, maxloop=1, specver="Spectractor", flipy=False):
@@ -47,8 +50,12 @@ def openTest(testname, pathtest="./results/output_simu", makeonly=None, maxloop=
     else : configName = hp['telescope'].lower()
     config = f"./{specver}/config/{configName}.ini"
     print(f"Loading config : ", config)
+
+    rebin = hp["CCD_REBIN"]
     
     header = fits.Header()
+
+    # header for CTIO
     header["DISPERSER"] = hp["DISPERSER"]
     header["EXPTIME"] = hp["cparams"]["EXPOSURE"]
     header['OUTTEMP'] = hp["cparams"]["ATM_TEMPERATURE"]
@@ -59,8 +66,6 @@ def openTest(testname, pathtest="./results/output_simu", makeonly=None, maxloop=
     header['XPIXSIZE'] = hp["CCD_PIXEL2ARCSEC"]
     header['GTGAIN11'], header['GTGAIN12'], header['GTGAIN21'], header['GTGAIN22'] = gain, gain, gain, gain
     header['GTRON11'], header['GTRON12'], header['GTRON21'], header['GTRON22'] = ron, ron, ron, ron
-
-    rebin = hp["CCD_REBIN"]
 
     header["FILTER"] = "empty"
     header["FILTERS"] = f"dia {hp['DISPERSER']}"
@@ -80,7 +85,12 @@ def openTest(testname, pathtest="./results/output_simu", makeonly=None, maxloop=
     header["DATE"] = None
     header['RA'] = "12:53:8.10"
     header['DEC'] = "-18:33:27.78"
-    header['HA'] = "01:52:42.92"
+    header['HA'] = 28.2 # "01:52:42.92"
+
+    # Parametre of AuxTel 
+    header["AIRTEMP"] = hp["cparams"]["ATM_TEMPERATURE"]
+    header["HUMIDITY"] = hp["cparams"]["ATM_HUMIDITY"]
+    header["PRESSURE"] = hp["OBS_PRESSURE"]
 
     lat = AC.Latitude(hp["OBS_LATITUDE"], unit=u.deg)
     dec = hp["cparams"]["ADR_DEC"]
@@ -92,6 +102,10 @@ def openTest(testname, pathtest="./results/output_simu", makeonly=None, maxloop=
     print(f"{c.m}ROTPA et par_angle{c.d} : ", header["ROTPA"], par_angle)
 
     xt = np.arange(hp["LAMBDA_MIN"], hp["LAMBDA_MAX"], hp["LAMBDA_STEP"])
+
+    # create a simulator
+    hpClass = hparams.HparamsFromJson(f"{testdir}/hparams.json")
+    sim = SpecSimulator(hpClass, savingFolders=False)
 
     for fold in ["image_fits", "spectrum_fits", pred]:
         if fold in os.listdir(testdir) : shutil.rmtree(f"{testdir}/{fold}")
@@ -175,6 +189,45 @@ def openTest(testname, pathtest="./results/output_simu", makeonly=None, maxloop=
                     spectrum.convert_from_flam_to_ADUrate()
                     xp = spectrum.lambdas
                     yp = spectrum.data * gain * spectrum.expo
+
+                    xspec = np.load(f"tempo/spectractor_wave_1.npy")
+                    yspec = np.load(f"tempo/spectractor_dist_1.npy")
+                    adru  = np.load(f"tempo/spectractor_adru_1.npy")
+                    adrv  = np.load(f"tempo/spectractor_adrv_1.npy")
+
+
+                    sim.ATM_AIRMASS = header["AIRMASS"]
+                    sim
+
+                    dist = sim.disperser.grating_lambda_to_pixel(xspec, x0=[64*rebin, 512*rebin], order=1)
+                    adr_x, adr_y = sim.loading_adr(lambdas=xspec)
+                    X_c = dist * np.cos(header['ANGLE'] * np.pi / 180) + adr_x
+                    Y_c = dist * np.sin(header['ANGLE'] * np.pi / 180) + adr_y
+                    ysimu = np.sqrt(X_c**2 + Y_c**2)
+
+
+                    fig, ((ax1, ax2, ax3), (ax4, ax5, ax6)) = plt.subplots(2, 3, sharex=True, figsize=(16, 8), gridspec_kw={'height_ratios': [3, 1]})
+                    ax1.plot(xspec, yspec, c="r", label="Dispersion Spectractor")
+                    ax1.plot(xspec, ysimu, c="g", label="Dispersion SpecSimulator")
+                    ax1.legend()
+                    ax4.plot(xspec, yspec-ysimu, marker=".", ls="", c="k")
+                    ax4.axhline(c="g")
+
+                    ax2.plot(xspec, adru, c="r", label="ADR spectractor")
+                    ax2.plot(xspec, adr_x, c="g", label="ADR specsimu")
+                    ax2.legend()
+                    ax5.plot(xspec, adru-adr_x, marker=".", ls="", c="k")
+                    ax5.axhline(c="g")
+
+                    ax3.plot(xspec, adrv, c="r", label="ADR spectractor")
+                    ax3.plot(xspec, adr_y, c="g", label="ADR specsimu")
+                    ax3.legend()
+                    ax6.plot(xspec, adrv-adr_y, marker=".", ls="", c="k")
+                    ax6.axhline(c="g")
+
+                    plt.show()
+
+                    print(f"LAMBDA sum diff = {np.sum(xspec-xp):.2f}")
 
                     fact = np.max(yp)/np.max(yt)
                     yp /= fact
