@@ -209,19 +209,10 @@ def makePlotAnalyse(ana, score, idec=0.1):
 
                 print(f"\n\n--- {n} /*/ {test} : {a[n][test]}")
 
-                if len(a[n][test]) != 0:
-
-                    l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
-                    y_min[i] = np.min(a[n][test])
-                    y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])] / 2
-                    y_mean[i] = np.mean(a[n][test])
-
-                else:
-
-                    l_min[i] = np.nan
-                    y_min[i] = np.nan
-                    y_std[i] = np.nan
-                    y_mean[i] = np.nan
+                l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
+                y_min[i] = np.min(a[n][test])
+                y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])] / 2
+                y_mean[i] = np.mean(a[n][test])
 
             # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
             plt.errorbar(x+decalage, y_min, yerr=y_std, color=col, marker='*', linestyle="", label=f"Best for {test}")
@@ -531,7 +522,8 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
                 f.write('\n'.join(html_codes))
 
-        makePlotAnalyse(ana, score)
+        if "noplot" in sys.argv:
+            makePlotAnalyse(ana, score)
 
 
 
