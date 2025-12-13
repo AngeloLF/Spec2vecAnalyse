@@ -208,7 +208,7 @@ def makePlotAnalyse(ana, score, idec=0.1):
                     score_models_std[i][m].append(ana.k2s[k][n][test][j]/2)
 
                 print(f"\n\n--- {n} /*/ {test} : {a[n][test]}")
-                print(f"Model : {model}")
+                print(f"Model : {ns}")
                 print(np.argmin(a[n][test]))
                 print(ana.k2l[k][n][test])
 
