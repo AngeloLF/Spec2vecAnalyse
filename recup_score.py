@@ -434,12 +434,13 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
                     test = f"{otest}" + "ctio"
                 elif "auxtel" in model:
                     test = f"{otest}" + "auxtel"
+                else:
+                    test = otest
+
+                if "Ext" in test and ("ctio" in model or "auxtel" in model):
+                    test.replace("Ext", "EXT")
 
                 test = test if "no0" not in model else f"{test}no0"
-
-
-
-
 
                 pbar.update(1)
 
@@ -522,7 +523,8 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
                 f.write('\n'.join(html_codes))
 
-        if "noplot" in sys.argv:
+        if "noplot" not 
+        in sys.argv:
             makePlotAnalyse(ana, score)
 
 
