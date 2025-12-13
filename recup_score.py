@@ -208,14 +208,20 @@ def makePlotAnalyse(ana, score, idec=0.1):
                     score_models_std[i][m].append(ana.k2s[k][n][test][j]/2)
 
                 print(f"\n\n--- {n} /*/ {test} : {a[n][test]}")
-                print(f"Model : {ns}")
-                print(np.argmin(a[n][test]))
-                print(ana.k2l[k][n][test])
 
-                l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
-                y_min[i] = np.min(a[n][test])
-                y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])] / 2
-                y_mean[i] = np.mean(a[n][test])
+                if len(a[n][test]) != 0:
+
+                    l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
+                    y_min[i] = np.min(a[n][test])
+                    y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])] / 2
+                    y_mean[i] = np.mean(a[n][test])
+
+                else:
+
+                    l_min[i] = np.nan
+                    y_min[i] = np.nan
+                    y_std[i] = np.nan
+                    y_mean[i] = np.nan
 
             # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
             plt.errorbar(x+decalage, y_min, yerr=y_std, color=col, marker='*', linestyle="", label=f"Best for {test}")
