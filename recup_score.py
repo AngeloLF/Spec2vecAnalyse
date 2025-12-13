@@ -16,7 +16,7 @@ def recup_mt(score, mode="dispo"):
 
     if mode == "dispo":
 
-        models = [m for m in os.listdir(f"./results/analyse/{score}") if not "." in m and not "wc" in m and not "no0" in m]
+        models = [m for m in os.listdir(f"./results/analyse/{score}") if not "." in m and not "wc" in m and not "no0" in m and not "calib" in m and "16k" in m]
 
         # setA = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
         # setB = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
@@ -438,7 +438,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
                     test = otest
 
                 if "Ext" in test and ("ctio" in model or "auxtel" in model):
-                    test.replace("Ext", "EXT")
+                    test = test.replace("Ext", "EXT")
 
                 test = test if "no0" not in model else f"{test}no0"
 
