@@ -523,8 +523,7 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
                 f.write('\n'.join(html_codes))
 
-        if "noplot" not 
-        in sys.argv:
+        if "noplot" not in sys.argv:
             makePlotAnalyse(ana, score)
 
 
