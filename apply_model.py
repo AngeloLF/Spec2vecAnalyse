@@ -48,12 +48,6 @@ if __name__ == "__main__":
     elif "auxtel" in Args.train : tel = "auxtel"
     else : tel = None
 
-    if tel is not None and tel in ["auxtel"]:
-        print(f"Apply reduction for AuxTel AVGPOOL 2x2")
-        reduction = {"kernel_size":(2, 2), "stride":(2, 2)}
-    else:
-        reduction = None
-
 
     
     ### Apply 
@@ -78,11 +72,7 @@ if __name__ == "__main__":
             for (img, true_tensor), spec_name in zip(test_dataset, test_dataset.spectrum_files):
 
                 true_spec_name = spec_name.replace("\\", "/").split("/")[-1]
-
                 test_image = img.unsqueeze(0).to(device)
-
-                if reduction is not None:
-                    test_image = nnfunc.avg_pool2d(test_image, **reduction)
 
                 t0 = time()
                 pred = model(test_image).cpu().numpy()[0]
