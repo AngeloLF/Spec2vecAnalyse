@@ -1,4 +1,5 @@
 import torch
+import torch.nn.functional as nnfunc
 
 import json, pickle, sys, os, shutil, importlib
 from tqdm import tqdm
@@ -42,6 +43,17 @@ if __name__ == "__main__":
         mu    = np.array([oms[0], pms[0], ams[0]])
         sigma = np.array([oms[1], pms[1], ams[1]])
 
+    # find tel
+    if "ctio" in Args.train : tel = "ctio"
+    elif "auxtel" in Args.train : tel = "auxtel"
+    else : tel = None
+
+    if tel is not None and tel in ["auxtel"]:
+        print(f"Apply reduction for AuxTel AVGPOOL 2x2")
+        reduction = {"kernel_size":(2, 2), "stride":(2, 2)}
+    else:
+        reduction = None
+
 
     
     ### Apply 
@@ -68,6 +80,10 @@ if __name__ == "__main__":
                 true_spec_name = spec_name.replace("\\", "/").split("/")[-1]
 
                 test_image = img.unsqueeze(0).to(device)
+
+                if reduction is not None:
+                    test_image = nnfunc.avg_pool2d(test_image, **reduction)
+
                 t0 = time()
                 pred = model(test_image).cpu().numpy()[0]
 
