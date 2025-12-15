@@ -57,6 +57,8 @@ def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, Spectrac
     arg_timbre = [int(np.round(np.max(f_arg(sim.lambdas, *arg)))) for f_arg, arg in zip(sim.psf_function['f_arg'], sim.psf_function['arg'])]
     timbre_size = sim.psf_function['timbre'](*arg_timbre)
 
+    print(f"SIM fait ...")
+
     mask = np.zeros_like(true_simu)
     for xi, yi in zip(xc, yc):
         mask[int(max(0, yi-timbre_size)):int(min(true_simu.shape[0], yi+timbre_size)), int(max(0, xi-timbre_size)):int(min(true_simu.shape[1], xi+timbre_size))] = 1
