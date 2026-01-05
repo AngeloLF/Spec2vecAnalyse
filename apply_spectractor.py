@@ -125,7 +125,7 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
     header["LINSPOS"] = hp["DISTANCE2CCD"] - 115
     if hp["DISPERSER"] == "holo4_003":
         header["LINSPOS"] -= 4
-    printinfo(f"Distance CCD in hparams : {hp["DISTANCE2CCD"]}")
+    printinfo(f"Distance CCD in hparams : {hp['DISTANCE2CCD']}")
 
     header["DATE-OBS"] = None
     header["DATE"] = None
@@ -143,7 +143,7 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
     _, par_angle = hadec2zdpar(ha, dec, lat.degree, deg=True)
     header["ROTPA"] = 270 - hp["OBS_CAMERA_ROTATION"] # hp["OBS_CAMERA_ROTATION"] - hp["OBS_CAMERA_RA_FLIP_SIGN"] * par_angle
 
-    printinfo(f"ROTPA et par_angle : {header["ROTPA"]}, {par_angle}")
+    printinfo(f"ROTPA et par_angle : {header['ROTPA']}, {par_angle}")
 
     xt = np.arange(hp["LAMBDA_MIN"], hp["LAMBDA_MAX"], hp["LAMBDA_STEP"])
 
