@@ -29,7 +29,9 @@ import utils_spec.psf_func as pf
 
 def printinfo(msg, color=c.g, ret=0):
 
-    print(f"{'\n'*ret}{color}INFO [apply_spectractor.py] {msg}{c.d}")
+    tabulation = '\n'*ret
+
+    print(f"{tabulation}{color}INFO [apply_spectractor.py] {msg}{c.d}")
 
 
 
