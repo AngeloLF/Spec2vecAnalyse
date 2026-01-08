@@ -11,259 +11,23 @@ import pandas as pd
 
 
 
-def recup_mt(score, mode="dispo"):
 
 
-    if mode == "dispo":
+def recup_mt(scores, mode="dispo"):
 
-        models = [m for m in os.listdir(f"./results/analyse/{score}") if not "." in m and not "wc" in m and not "no0" in m and not "calib" in m and "16k" in m]
+    models = list()
+    tests = list()
 
-        # setA = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-        # setB = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
+    for score in scores:
 
-        # models = list(set(setA+setB+["pred_Spectractor_x_x_0e+00"]))
+        models = [m for m in os.listdir(f"./results/analyse/{score}") if not "." in m]
 
+        for model in models:
+            tests += [t for t in os.listdir(f"./results/analyse/{score}/{model}") if not "." in t]
 
-    elif mode == "all":
+    return list(set(models)), list(set(tests))
 
-        model_name = os.listdir(f"./results/Spec2vecModels_Results")
-        models = list()
 
-        for mn in model_name:
-            states = os.listdir(f"./results/Spec2vecModels_Results/{mn}/states")
-
-            for state in states:
-
-                if "_best" in state:
-
-                    state_name = state.split("_best")[0] 
-
-                    if not ("cal" in state and state.count("train") == 1):
-                        
-                        models.append(f"{mn}_{state_name}")
-
-                    else:
-
-                        print(f"Exclude pre-trained {c.r}{mn}_{state_name}{c.d}")
-
-
-    else:
-
-        raise Exception(f"Mode {mode} unknow")
-
-
-
-    return list(set(models))
-
-
-
-def initAnalyse(tests, colors):
-
-    """
-    k : key
-    n : names
-    a : args
-
-    For example:
-        SCaM_by_loss = ["chi2", "MSE" "L1N"]
-
-        k2a : SCaM_by_loss -> {"chi2": {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}, 
-                               "MSE" : {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]},
-                               "L1N" : {"test1k":[float1, float2 ...], "test1kOT":[float1, float2 ...]}}
-
-        k2t : SCaM_by_loss -> {"x"    : ["chi2", "MSE" "L1N"],
-                               "y"    : ["SCaM_***_train8k_1e-03", ...],
-                               "l2xy" : {"SCaM_MSE_train8k_1e03":[1, 2], ...}, }
-
-        k2p : SCaM_by_loss -> ["SCaM_chi2_train2k_1e-6", ...]
-    """
-
-    ANA = SimpleNamespace()
-    ANA.k2a = dict() # float mean
-    ANA.k2s = dict() # float std
-    ANA.k2l = dict() # 
-    ANA.k2p = dict() # 
-    ANA.k2t = dict() # 
-    ANA.tests = tests
-    ANA.colors = colors
-
-    return ANA
-
-
-def addAnalyse(ana, name, inSetPreds, listOfArgs):
-
-    ana.k2a[name] = dict()
-    ana.k2s[name] = dict()
-    ana.k2l[name] = dict()
-    ana.k2t[name] = {"x" : listOfArgs, "y":list(), "l2xy":dict()}
-    ana.k2p[name] = inSetPreds
-
-    for a in listOfArgs:
-
-        ana.k2a[name][a] = dict()
-        ana.k2s[name][a] = dict()
-        ana.k2l[name][a] = dict()
-
-        for test in ana.tests : 
-            ana.k2a[name][a][test] = list()
-            ana.k2l[name][a][test] = list()
-            ana.k2s[name][a][test] = list()
-
-
-    for poss in inSetPreds:
-
-        for i, a in enumerate(listOfArgs):
-
-            if a in poss:
-
-                awu = a.replace("_", "")
-                y = poss.replace(awu, "***")
-
-                if y not in ana.k2t[name]["y"]:
-
-                    ana.k2t[name]["y"].append(y)
-
-                yi = ana.k2t[name]["y"].index(y)
-
-                ana.k2t[name]["l2xy"][poss] = [yi, i]
-
-    ana.k2t[name]["tab"] = np.zeros((len(ana.k2t[name]["y"]), len(ana.k2t[name]["x"]))) * np.nan
-
-
-
-
-def addValueInAnalyse(ana, model, otest, m, s):
-
-    for k, p in ana.k2p.items():
-
-        if model in p:
-
-            for a in ana.k2a[k].keys():
-
-                if a[0] == "~":
-
-                    if a[1:] not in model:
-
-                        ana.k2a[k][a][otest].append(m)
-                        ana.k2s[k][a][otest].append(s)
-                        ana.k2l[k][a][otest].append(model)
-
-                else:
-
-                    if a in model:
-
-                        ana.k2a[k][a][otest].append(m)
-                        ana.k2s[k][a][otest].append(s)
-                        ana.k2l[k][a][otest].append(model)
-
-
-def addMeanValueInAnalyse(ana, model, m):
-
-    for k, t in ana.k2t.items():
-
-        if model in t["l2xy"].keys():
-
-            yi, xi = t["l2xy"][model]
-            t["tab"][yi, xi] = m
-
-
-
-def makePlotAnalyse(ana, score, idec=0.1):
-
-    for k, a in ana.k2a.items():
-
-        ns = list(a.keys())
-        x = np.arange(len(ns))
-
-        mean_score_models = np.zeros(len(ns))
-        stds_score_models = np.zeros(len(ns))
-        mean_score_names  = np.zeros(len(ns)).astype(str)
-
-
-        score_models = list()
-        score_models_std = list()
-        for _ in range(len(ns)): 
-            score_models.append(dict())
-            score_models_std.append(dict())
-
-        plt.figure(figsize=(16, 8))
-        decalages = np.linspace(-idec, idec, len(ana.tests) + 1)
-
-        for decalage, test, col in zip(decalages[:-1], ana.tests, ana.colors):
-            
-            l_min = np.zeros(len(ns)).astype(str)
-            y_min = np.zeros(len(ns))
-            y_std = np.zeros(len(ns))
-            y_mean = np.zeros(len(ns))
-
-
-            for i, n in enumerate(ns):
-
-                for j, m in enumerate(ana.k2l[k][n][test]):
-
-                    if m not in score_models[i] : score_models[i][m] = list()
-                    score_models[i][m].append(a[n][test][j])
-
-                    if m not in score_models_std[i] : score_models_std[i][m] = list()
-                    score_models_std[i][m].append(ana.k2s[k][n][test][j]/2)
-
-                print(f"\n\n--- {n} /*/ {test} : {a[n][test]}")
-
-                l_min[i] = ana.k2l[k][n][test][np.argmin(a[n][test])]
-                y_min[i] = np.min(a[n][test])
-                y_std[i] = ana.k2s[k][n][test][np.argmin(a[n][test])] / 2
-                y_mean[i] = np.mean(a[n][test])
-
-            # plt.plot(x, y_mean, color=col, marker='.', linestyle="", label=f"Mean of {test}")
-            plt.errorbar(x+decalage, y_min, yerr=y_std, color=col, marker='*', linestyle="", label=f"Best for {test}")
-            plt.axhline(np.min(y_min), color=col, linestyle=":", label=l_min[np.argmin(y_min)])
-
-
-        for i in range(len(ns)):
-            means_score = [np.mean(s) for s in score_models[i].values()]
-            stds_score = [np.sum(np.array(s)**2)**0.5/3 for s in score_models_std[i].values()]
-            mean_score_models[i] = np.min(means_score)
-            stds_score_models[i] = stds_score[np.argmin(means_score)]
-
-            mean_score_names[i] = list(score_models[i].keys())[np.argmin(means_score)]
-
-        plt.errorbar(x+decalages[-1], mean_score_models, yerr=stds_score_models, color="k", marker='*', linestyle="", label=f"Best average")
-        plt.axhline(np.min(mean_score_models), color="k", linestyle=":", label=mean_score_names[np.argmin(mean_score_models)])
-
-        plt.legend()
-        plt.title(f"{k}")
-        plt.xticks(np.arange(len(ns)), [lab.replace("_", "") for lab in ns])
-        plt.yscale("log")
-        plt.savefig(f"./results/analyse/all_resume/graph/classic_{score}_{k}.png")
-        plt.close()
-
-
-        # Tab figure
-
-        dfmean = np.nanmean(ana.k2t[k]["tab"], axis=0)
-        dfmin  = np.nanmin(ana.k2t[k]["tab"], axis=0)
-
-        df_def = pd.DataFrame(ana.k2t[k]["tab"], index=ana.k2t[k]["y"], columns=[lab.replace("_", "") for lab in ana.k2t[k]["x"]])
-        row_vide = pd.DataFrame([[np.nan]*df_def.shape[1]], columns=df_def.columns, index=[''])
-        row_mean = pd.DataFrame([dfmean],                   columns=df_def.columns, index=['Mean'])
-        row_min  = pd.DataFrame([dfmin],                    columns=df_def.columns, index=['Min'])
-
-        df = pd.concat([df_def, row_vide, row_mean, row_min])
-
-        if score == "L1" : vmax = min(np.nanmax(ana.k2t[k]["tab"]), 3.0)
-        elif score == "chi2" : vmax = min(np.nanmax(ana.k2t[k]["tab"]), 2.0)
-        else : raise Exception(f"Score {score} unknow")
-
-        plt.figure(figsize=(12, 12))
-        axs = sns.heatmap(df, annot=True, fmt=".3f", cmap='coolwarm', vmax=vmax)
-
-        rect = patches.Rectangle((np.argmin(dfmin), df.shape[0]-1), 1, 1, fill=False, edgecolor='k', linewidth=3)
-        axs.add_patch(rect)
-
-        plt.title(f"{k}")
-        plt.tight_layout()
-        plt.savefig(f"./results/analyse/all_resume/graph/TABLEAU_classic_{score}_{k}.png")
-        plt.close()
 
 
 
@@ -284,6 +48,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
 
         # y[y == np.inf] = np.nan
 
+        """
         for color_palette, palette in colors.items():
 
             valSpectractor = None
@@ -303,6 +68,7 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
                         elif color_palette == "learningRate" and pal == name[-5:] : color = col
 
                     plt.plot(xg, yg, color=color)
+
                     plt.scatter([i], yg[-1], color=color, marker="s")
 
                     if "Spectractor_x" in name and valSpectractor is None : valSpectractor = y[i][-3]
@@ -316,8 +82,10 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
                 plt.yscale("log")
                 plt.legend()
                 # plt.show()
-                plt.savefig(f"{savefig_name}_{zoom_str}{score}_{color_palette}.png")
-                plt.close()
+                try:
+                    plt.savefig(f"{savefig_name}_{zoom_str}{score}_{color_palette}.png")
+                except:
+                    plt.close()"""
 
 
 
@@ -386,30 +154,15 @@ def generate_html_table(colonnes, lignes, text, y, sorting=False, marker='.', sa
     return html
 
 
-def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tests_colors):
 
-    
 
+
+
+def make_score(score_type, models, tests):
+ 
     for score in score_type:
 
-        ana = initAnalyse(tests, tests_colors)
-
-        set1 = possibility(models=["SCaM"], losses=["chi2", "L1N", "MSE"], trains=["train2k", "train4k", "train8k", "train16k"], lrs=["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-        addAnalyse(ana, "ANALYSE_SCaM_by_loss",  set1, ["MSE", "L1N", "chi2"])
-        addAnalyse(ana, "ANALYSE_SCaM_by_train", set1, ["train2k", "train4k", "train8k", "train16k"])
-        addAnalyse(ana, "ANALYSE_SCaM_by_lr",    set1, ["1e-03", "1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-
-        set2 = possibility(models=["SCaM"], losses=["chi2"], trains=["train16k", "train16kno0", "train16kwc", "train16kwcno0", "train16kwcPX", "train16kwcPXno0"], lrs=["1e-04", "5e-05", "1e-05", "5e-06"])
-        addAnalyse(ana, "ANALYSE_SCaM_by_16k_all",   set2, ["16k_", "16kno0_", "16kwc_", "16kwcno0_", "16kwcPX_", "16kwcPXno0_"])
-        addAnalyse(ana, "ANALYSE_SCaM_by_16k_calib", set2, ["~wc", "wc"])
-        addAnalyse(ana, "ANALYSE_SCaM_by_16k_no0",   set2, ["~no0", "no0"])
-
-        set3 = possibility(models=["SCaM", "SCaMv2", "SotSu", "SotSuv2", "CaTS", "CaTSv2"], losses=["chi2"], trains=["train16k"], lrs=["1e-04", "5e-05", "1e-05", "5e-06", "1e-06"])
-        addAnalyse(ana, "ANALYSE_by_Models", set3, ["SCaM_", "SCaMv2_", "SotSu_", "SotSuv2_", "CaTS_", "CaTSv2_"])
-
-
-        if score not in os.listdir(f"{path_analyse}"):
-            break
+        print(f"Make score {score}")
 
         # Sorting lists
         models.sort()
@@ -423,28 +176,16 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
         
         for m, model in enumerate(models):
 
-            print(model)
+            print(f"    model {model}")
 
             tot_mean = [list(), list()]
             tot_std = [list(), list()]
 
-            for t, otest in enumerate(tests):
+            for t, test in enumerate(tests):
 
-                if "ctio" in model:
-                    test = f"{otest}" + "ctio"
-                elif "auxtel" in model:
-                    test = f"{otest}" + "auxtel"
-                else:
-                    test = otest
+                print(f"        test {test}")
 
-                if "Ext" in test and ("ctio" in model or "auxtel" in model):
-                    test = test.replace("Ext", "EXT")
-
-                test = test if "no0" not in model else f"{test}no0"
-
-                pbar.update(1)
-
-                if f"{model}" in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/{model}"):
+                if model in os.listdir(f"{path_analyse}/{score}") and test in os.listdir(f"{path_analyse}/{score}/{model}"):
 
                     with open(f"{path_analyse}/{score}/{model}/{test}/resume.txt", "r") as f:
                         data = f.read().split("\n")[:-1]
@@ -467,15 +208,12 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
                         elif score == "chi2" : x[i, m, t] = f"{mean:.4f} ~ {std:.4f}"
                         else : raise Exception(f"Score {score} unknow")
 
-                        if i == 0 : addValueInAnalyse(ana, model, otest, mean, std)
-
                         tot_mean[i].append(mean)
                         tot_std[i].append(std)
 
                 else:
 
-                    # print(f"{c.r}Analyse {score} > {model} -> {test} unknow{c.d}")
-                    pass
+                    print(f"{c.lk}        -> Not find : {path_analyse}/{score}/{model}/{test}/resume.txt{c.d}")
 
 
             for i in range(2):
@@ -488,7 +226,6 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
                 elif score == "chi2" : x[i, m, -3] = f"{mom:.6f} ~ {soa:.6f}"
                 else : raise Exception(f"Score {score} unknow")
 
-                if i == 0 : addMeanValueInAnalyse(ana, model, mom)
 
         for i in range(2):
 
@@ -511,39 +248,18 @@ def make_score(name_tests, tests, models, score_type, pbar, markers, colors, tes
 
         for sorting, sorting_str in [(False, ""), (True, "_sorting")]:
 
-            with open(f"{path_resume}/html/{name_tests}_{score}{sorting_str}.html", "w") as f:
+            with open(f"{path_resume}/html/{score}{sorting_str}.html", "w") as f:
 
                 html_codes = [f"<h1>Score {score}</h1>"]
 
                 for i, typeScore in enumerate(["classic"]):
 
                     html_codes.append(f"<h2>{typeScore}</h2>")
-                    # if score == "L1" and typeScore == "classic":
-                    html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/{name_tests}", markers=markers, colors=colors, score=score))
+                    html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/zzz", score=score))
 
                 f.write('\n'.join(html_codes))
 
-        if "noplot" not in sys.argv:
-            makePlotAnalyse(ana, score)
 
-
-
-
-def possibility(models, losses, trains, lrs, loads=[None]):
-
-    preds = list()
-
-    for model in models:
-        for loss in losses:
-            for lr in lrs:
-                for train in trains:
-                    for load in loads:
-
-                        pred = f"pred_{model}_{loss}_{train}_{lr}"
-                        if load is not None : pred += f"_{load}"
-                        preds.append(pred)
-
-    return preds
 
 
 
@@ -559,38 +275,11 @@ if __name__ == "__main__":
     os.makedirs(f"{path_resume}/graph", exist_ok=True)
     os.makedirs(f"{path_resume}/html", exist_ok=True)
 
-    if "local" in sys.argv:
-        tests, nb_ft = {"classic" : ["test4", "test5", "test6"]}, 3
-        markers = {"classic" : None}
-        tests_colors = {"classic" : ["r", "g", "b"]}
-    else: 
-        tests, nb_ft = {"classic" : ["test1k", "test1kExt", "test1kOT"]}, 3
-        markers = {"classic" : None}
-        tests_colors = {"classic" : ["r", "g", "b"]}
+    models, tests = recup_mt(score_type)
+    print(models)
+    print(tests)
 
-    colors = {
-        "model"        : {"SCaM_" : "r", "SCaMv2_":"darkred", "SotSu_" : "b", "SotSuv2_":"darkblue", "CaTS":"g", "Spectractor":"k"},
-        "metric"       : {"chi2" : "r", "MSE" : "b", "L1N" : "g", "Spectractor":"k"},
-        "trainingType" : {"kwc_":"darkred", "kwcno0_":"r", "kwcPX_":"darkblue", "kwcPXno0_":"b", "kno0_":"g", "k_":"gray", "Spectractor":"k"},
-        "trainNk"      : {"16k" : "g", "8k" : "b", "4k" : "r", "2k" : "gray", "Spectractor":"k"},
-        "learningRate" : {"1e-06":"magenta", "5e-06":"b", "1e-05":"g", "5e-05":"yellow", "1e-04":"orange", "1e-03":"red", "1e-02":"darkred", "Spectractor":"k"}
-    }
-
-    mode = "dispo" if "all" not in sys.argv else "all"
-    
-    models = list()
-    for score in score_type:
-        models += recup_mt(score, mode)
-    models = list(set(models))
-
-    pbar = tqdm(total=nb_ft*len(models)*len(score_type))
-
-    for name, test in tests.items():
-
-        make_score(name, test, models, score_type, pbar, markers[name], colors, tests_colors[name])
-
-    pbar.close()
-
+    make_score(score_type, models, tests)
 
 
 

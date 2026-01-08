@@ -45,22 +45,21 @@ def compute_score_L1(true, pred, sim, num_spec_str):
 
 
 
-def compute_score_chi2(true, pred, sim, num_spec_str, Cread, gain, SpectractorProcess=True):
+def compute_score_chi2(true, pred, sim, num_spec_str, Cread=12, gain=3, SpectractorProcess=True):
 
     fact_n = np.max(true) / np.max(pred)
     pred_n = pred * fact_n
     sigma_READ = Cread / gain
 
-    true_simu = np.load(f"{Paths.test}/{Folds.imageFolder}/image_{num_spec_str}.npy")
-    pred_simu, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred,   with_noise=False, for_analyse=True)
-    pred_simu_n, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred_n, with_noise=False, for_analyse=True)
+    true_simu = np.load(f"{Paths.test}/image/image_{num_spec_str}.npy")
+    pred_simu,   _, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred,   with_noise=False)
+    pred_simu_n, _, xc, yc = sim.makeSim(num_simu=num_spec_str, updateParams=False, giveSpectrum=pred_n, with_noise=False)
     arg_timbre = [int(np.round(np.max(f_arg(sim.lambdas, *arg)))) for f_arg, arg in zip(sim.psf_function['f_arg'], sim.psf_function['arg'])]
     timbre_size = sim.psf_function['timbre'](*arg_timbre)
 
     mask = np.zeros_like(true_simu)
     for xi, yi in zip(xc, yc):
         mask[int(max(0, yi-timbre_size)):int(min(true_simu.shape[0], yi+timbre_size)), int(max(0, xi-timbre_size)):int(min(true_simu.shape[1], xi+timbre_size))] = 1
-
     true_simu[~(mask == 1)] = 0
     pred_simu[~(mask == 1)] = 0
     pred_simu_n[~(mask == 1)] = 0
@@ -91,26 +90,26 @@ def compute_score_chi2(true, pred, sim, num_spec_str, Cread, gain, SpectractorPr
 
 
 
-def compute_score(name, true, pred, sim, num_spec_str, Cread, gain):
+def compute_score(name, true, pred, sim, num_spec_str):
 
     if   name == "L1"   : return compute_score_L1(true, pred, sim, num_spec_str)
-    elif name == "chi2" : return compute_score_chi2(true, pred, sim, num_spec_str, Cread, gain)
+    elif name == "chi2" : return compute_score_chi2(true, pred, sim, num_spec_str)
     else : raise Exception(f"Unknow score name {name} in analyse_test.compute_score.")
 
  
 
 
 
-def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savename):
+def makeOneSpec(true, pred, sim, varp, num_str, give_norma, savename, gain=3.):
 
     n = int(num_str)
 
     # compute score
-    result = compute_score(Args.score, true, pred, sim, num_str, Cread, gain)
-    resultChi2 = compute_score("chi2", true, pred, sim, num_str, Cread, gain)
+    result = compute_score(Args.score, true, pred, sim, num_str)
+    resultChi2 = compute_score("chi2", true, pred, sim, num_str)
     s, sn = result["score"], result["score_norma"]
     if give_norma : pred *= result["fact"]
-    true_image = np.load(f"{Paths.test}/{Folds.imageFolder}/image_{num_str}.npy")
+    true_image = np.load(f"{Paths.test}/image/image_{num_str}.npy")
 
     # Make subtitle
     pre_title = f"For {Args.model_loss} train with {Args.fulltrain_str}_{Args.lr_str}"
@@ -306,12 +305,12 @@ def open_fold(args, paths, folds, nb_level=5):
 
         try:
             pred = np.load(f"{paths.test}/{folds.pred_folder}/{file}")
-        except Exception as e:
+        except:
             pred = np.zeros_like(true) * np.nan
 
         res["flux"][i] = np.sum(true) / hp["CCD_GAIN"] # e- / (e-/ADU) = flux in ADU
 
-        result = compute_score(Args.score, true, pred, sim, num_spec_str, hp["cparams"]["CCD_READ_OUT_NOISE"], hp["CCD_GAIN"])
+        result = compute_score(Args.score, true, pred, sim, num_spec_str)
 
         res["classic"][i] = result['score']
         res["norma"][i] = result['score_norma']
@@ -337,7 +336,6 @@ def open_fold(args, paths, folds, nb_level=5):
     plt.figure(figsize=(12, 8))
     vmin = min(np.nanmin(res["classic"]), np.nanmin(res["norma"]))
     vmax = max(np.nanmax(res["classic"]), np.nanmax(res["norma"]))
-
     for mode, col in [("classic", "g"), ("norma", "r")]:
         plt.hist(res[mode], bins=50, range=(vmin, vmax), color=col, alpha=0.8, label=mode)
     plt.xlabel(f"Score")
@@ -351,7 +349,6 @@ def open_fold(args, paths, folds, nb_level=5):
     
 
     # 10 exemple of scores
-    """
     for mode in ["classic", "norma"]:
 
         isNorma = True if mode == "norma" else False
@@ -377,35 +374,7 @@ def open_fold(args, paths, folds, nb_level=5):
                 else:
                     sim.psf_function['arg'][0][0] = vp[param][n]
 
-            makeOneSpec(true, pred, sim, vp, num_spec, hp["cparams"]["CCD_READ_OUT_NOISE"], hp["CCD_GAIN"], give_norma=isNorma, savename=f"Level{i}_{mode}")
-    """
-
-    for mode in ["classic", "norma"]:
-
-        isNorma = True if mode == "norma" else False
-
-        RESMIN = np.min(res[mode][~np.isnan(res[mode])])
-        RESMAX = np.max(res[mode][~np.isnan(res[mode])])
-        true_levels = np.copy(res[mode])
-        true_levels[np.isnan(res[mode])] = np.nan
-
-        for i, level in enumerate(np.linspace(0, 100, nb_level)):
-
-            near = np.nanargmin(np.abs(np.nanpercentile(true_levels, level)-true_levels))
-            num_spec = res["num"][near]
-            n = int(num_spec)
-
-            pred = np.load(f"{Paths.test}/{Folds.pred_folder}/{Args.folder_output}_{num_spec}.npy")
-            true = np.load(f"{Paths.test}/{Args.folder_output}/{Args.folder_output}_{num_spec}.npy")
-
-            # set sim
-            for param in vp.keys():
-                if param[:4] != "arg.": 
-                    sim.__setattr__(param, vp[param][n])
-                else:
-                    sim.psf_function['arg'][0][0] = vp[param][n]
-
-            makeOneSpec(true, pred, sim, vp, num_spec, hp["cparams"]["CCD_READ_OUT_NOISE"], hp["CCD_GAIN"], give_norma=isNorma, savename=f"Level{i}_{mode}")
+            makeOneSpec(true, pred, sim, vp, num_spec, give_norma=isNorma, savename=f"Level{i}_{mode}")
 
 
 
@@ -452,7 +421,7 @@ if __name__ == "__main__":
             |               |-- Args.test  |-- <Folds.pred_folder>
             |                              |-- spectrum
             |                              |-- harams.json
-            |                              |-- vparams.npz
+            |                              |-- variable_params.pck
             |
             |
             |-- analyse     --- Args.score --- <Folds.pred_folder> --- Args.test (-> Paths.save)
@@ -499,13 +468,6 @@ if __name__ == "__main__":
     except:
         train_params = dict()
 
-    # chargement des params du test
-    try:
-        with open(f"{Paths.test}/hparams.json", 'r') as f:
-            test_params = json.load(f)
-    except:
-        test_params = dict()
-
 
 
     # For each folder test (like output construct with lsp)
@@ -518,11 +480,6 @@ if __name__ == "__main__":
     os.mkdir(f"{Paths.save}/figure_image")
     os.mkdir(f"{Paths.save}/figure_chi2eq")
     os.mkdir(f"{Paths.save}/figure_full")
-
-    if test_params["telescope"].startswith("auxtel"):
-        Folds.imageFolder = "imageOrigin"
-    else:
-        Folds.imageFolder = "image"
 
 
 
