@@ -71,7 +71,8 @@ def compute_score_chi2(true, pred, sim, num_spec_str, Cread, gain, SpectractorPr
     chi2eq = residus**2 / (sigma_READ**2 + true_simu / gain) * np.sign(residus)
     score = np.sum(np.abs(chi2eq)) / N
 
-    # norma
+    # norm
+
     residus_n = true_simu - pred_simu_n
     chi2eq_n = residus_n**2 / (sigma_READ**2 + true_simu / gain) * np.sign(residus_n)
     score_n = np.sum(np.abs(chi2eq_n)) / N
@@ -187,6 +188,62 @@ def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savenam
     plt.tight_layout()
     plt.savefig(f"{Paths.save}/figure_full/{savename}.png")
     plt.close()
+
+
+
+    # PLOT with Spectractor results
+    if "pred_Spectractor_x_x_0e+00" in os.listdir(f"{Paths.test}"):
+
+        xt = np.arange(300, 1100)
+        yt = np.load(f"{Paths.test}/spectrum/spectrum_{num_str}.npy")
+        yp = np.load(f"{Paths.test}/pred_Spectractor_x_x_0e+00/spectrum_{num_str}.npy")
+        yp_err = np.load(f"{Paths.test}/pred_Spectractor_x_x_0e+00/spectrumerr_{num_str}.npy")
+        ys = np.load(f"{Paths.test}/{Folds.pred_folder}/spectrum_{num_str}.npy")
+
+        yp_err[yp_err < 1] = 1 # avoid 0 ...
+
+        res_p = (yt-yp)/yp_err
+        res_s = (yt-ys)/yp_err
+
+        ylim_p = np.percentile(np.abs(res_p), 95)
+        ylim_s = max(np.percentile(np.abs(res_s), 95), 3)
+
+        img = np.load(f"{Paths.test}/image/image_{num_str}.npy")
+        
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True, figsize=(20, 10), gridspec_kw={'height_ratios': [3, 1, 1]})
+
+        plt.suptitle(f"Comparaison Spectractor & {Args.model_loss}_{Args.fulltrain_str}_{Args.lr_str}")
+
+        # plot spectre
+        ax1.plot(xt, yt, c='k', label='Spectrum to predict')
+        ax1.errorbar(xt, yp, yerr=yp_err, c='r', label='Spectractor', alpha=0.5)
+        ax1.errorbar(xt, ys, yerr=yp_err, c='b', label="Args.model_loss", alpha=0.5)
+        ax1.set_ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_str}.npy")
+        ax1.legend()
+
+        # Residus spectractor
+        ax2.axhline(0, color='k', linestyle='-')
+        ax2.axhline(1, color='k', linestyle=':')
+        ax2.axhline(-1, color='k', linestyle=':')
+        ax2.errorbar(xt, res_p, yerr=1, color='r')
+        ax2.errorbar(xt, res_s, yerr=1, color='b')
+        # ax2.set_ylim(-np.max(np.abs(yt-yp)/yp_err), np.max(np.abs(yt-yp)/yp_err))
+        ax2.set_ylim(-ylim_p, ylim_p)
+        ax2.set_xlabel(r"$\lambda$ (nm)")
+        ax2.set_ylabel(f"Residus / err")
+
+        # Residus model ML
+        ax3.axhline(0, color='k', linestyle='-')
+        ax3.axhline(1, color='k', linestyle=':')
+        ax3.axhline(-1, color='k', linestyle=':')
+        ax3.plot(xt, res_s, color='b')
+        ax3.set_ylim(-ylim_s, ylim_s)
+        ax3.set_xlabel(r"$\lambda$ (nm)")
+        ax3.set_ylabel(f"Residus / err")
+
+        plt.savefig(f"{Paths.save}/figure_spectractor/{savename}.png")
+        plt.close()
+
 
 
 
@@ -517,6 +574,13 @@ if __name__ == "__main__":
     os.mkdir(f"{Paths.save}/figure_image")
     os.mkdir(f"{Paths.save}/figure_chi2eq")
     os.mkdir(f"{Paths.save}/figure_full")
+
+    # Make spectractor analyse
+    if "pred_Spectractor_x_x_0e+00" in os.listdir(f"{Paths.test}"):
+        print(f"{c.g}INFO [analyse_test.py] : Spectractor extraction find{c.d}")
+        os.mkdir(f"{Paths.save}/figure_spectractor")
+    else:
+        print(f"{c.y}INFO [analyse_test.py] : Spectractor extraction not find{c.d}")
 
     if test_params["telescope"].startswith("auxtel"):
         Folds.imageFolder = "imageOrigin"
