@@ -251,7 +251,7 @@ def plot_chi2eq(ax, chi2eq):
 
 
 
-def open_fold(args, paths, folds, nb_level=5):
+def open_fold(args, paths, folds, nb_level=20):
 
     """
     dict res : 
@@ -444,7 +444,6 @@ def plot_full_legend(ax, varp, n):
 
 
 if __name__ == "__main__":
-
 
     """
 
