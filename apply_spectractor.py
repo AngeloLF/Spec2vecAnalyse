@@ -35,7 +35,7 @@ def printinfo(msg, color=c.g, ret=0):
 
 
 
-def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None, maxloop=1, specver="Spectractor", debug=False, spectractor_debug=None):
+def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None, maxloop=1, specver="Spectractor", debug=False, spectractor_debug=None, partition=None):
     """
     Apply Spectractor
 
@@ -47,6 +47,7 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
         - specver [str] : the version of spectractor (need to have the spectractor folder)
         - debug [bool] : debug of apply_spectractor itself
         - spectractor_debug [None or str] : None, "debug" or "verbose" for spectractor. "debug" turn on parameters.DEBUG and parameters.VERBOSE
+        - partition [list of int | numpy of int] : indice for apply a sub-list of images
     """
 
 
@@ -149,10 +150,14 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
 
 
 
-    # create new folders for spectractor
-    for fold in ["image_fits", "spectrum_fits", pred]:
-        if fold in os.listdir(testdir) : shutil.rmtree(f"{testdir}/{fold}")
-        os.mkdir(f"{testdir}/{fold}")
+    # create new folders for spectractor, if partition is not given (in this case, folder need to be created before)
+    if partition is None:
+        printinfo(f"No partition, reset folders")
+        for fold in ["image_fits", "spectrum_fits", "spectractor_exceptions", pred]:
+            if fold in os.listdir(testdir) : shutil.rmtree(f"{testdir}/{fold}")
+            os.mkdir(f"{testdir}/{fold}")
+    else:
+        printinfo(f"Partition : {partition}")
 
 
 
@@ -166,7 +171,7 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
     # iteration on simu
     for n in range(hp["nsimu"]):
 
-        if makeonly is None or makeonly == n:
+        if (makeonly is None or makeonly == n) and (partition is None or n in partition):
 
 
             ### extract unique values
@@ -318,7 +323,9 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
         printinfo(f"Number of good extraction : {np.sum(nbsok)} / {hp['nsimu']}")
         printinfo(f"Save {len(dictOfExceptionSpectractor)} exception(s)...")
 
-        with open(f"{testdir}/spectractor_exceptions.json", "w") as f:
+        suffixe = "" if partition is None else f"_{partition[0]}_{len(partition)}"
+
+        with open(f"{testdir}/spectractor_exceptions/spectractor_exceptions{suffixe}.json", "w") as f:
             json.dump(dictOfExceptionSpectractor, f, indent=4)
 
 
@@ -431,6 +438,7 @@ if __name__ == "__main__":
     makeonly = None
     folderML = None
     test_folder = sys.argv[1]
+    nrange = None
 
     debug = False
     spectractor_debug = None
@@ -439,10 +447,20 @@ if __name__ == "__main__":
 
         if arg[:9] == "makeonly=" : makeonly = int(arg[9:])
         elif arg[:9] == "folderML=" : folderML = arg[9:]
+        elif arg[:6] == "range=" : nrange = arg[6:]
 
         elif arg == "debugspec" : spectractor_debug = "debug"
         elif arg == "verbspec" : spectractor_debug = "verbose"
         elif arg == "debug" : debug = True
+
+
+
+    # build partition
+    if nrange is None:
+        partition = None
+    else:
+        nbegin, nsimu = nrange.split("_")
+        partition = np.arange(int(nbegin), int(nbegin) + int(nsimu))
 
 
 
@@ -455,7 +473,7 @@ if __name__ == "__main__":
             raise Exception(f"Need makeonly and folderML (like SCaM_chi2_train16kauxtel_1e-04) for compare")
         compareSpec(test_folder, makeonly, folderML)
     else:
-        apply_spectractor(test_folder, makeonly=makeonly, specver=spectractor_version, debug=debug, spectractor_debug=spectractor_debug)
+        apply_spectractor(test_folder, makeonly=makeonly, specver=spectractor_version, debug=debug, spectractor_debug=spectractor_debug, partition=partition)
 
 
 
