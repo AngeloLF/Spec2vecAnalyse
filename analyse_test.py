@@ -705,9 +705,11 @@ if __name__ == "__main__":
 
             pc = 0.05
             args = np.argsort(true_res)
-            imin, imax = int(len(args)*pc), int(len(args)*(1-pc)) 
+            imin, imax = int(len(args)*pc), int(len(args)*(1-pc))
+            print(f"No correction   : {np.mean(true_res)}")
+            print(f"With correction : {np.mean(true_res[imin:imax])}")
 
-            f.write(f"{mode}={np.mean(true_res[imin:imax])}~{np.std(true_res[imin:imax])}\n")
+            f.write(f"{mode}={np.mean(true_res[args[imin:imax]])}~{np.std(true_res[args[imin:imax]])}\n")
 
 
 
