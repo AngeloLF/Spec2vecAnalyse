@@ -229,6 +229,7 @@ def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savenam
         ax2.errorbar(xt, res_p, yerr=1, color='r')
         ax2.errorbar(xt, res_s, yerr=1, color='b')
         # ax2.set_ylim(-np.max(np.abs(yt-yp)/yp_err), np.max(np.abs(yt-yp)/yp_err))
+        print(res_p)
         ax2.set_ylim(-ylim_p, ylim_p)
         ax2.set_xlabel(r"$\lambda$ (nm)")
         ax2.set_ylabel(f"Residus / err")
