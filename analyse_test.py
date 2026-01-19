@@ -199,6 +199,7 @@ def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savenam
         yp = np.load(f"{Paths.test}/pred_Spectractor_x_x_0e+00/spectrum_{num_str}.npy")
         yp_err = np.load(f"{Paths.test}/pred_Spectractor_x_x_0e+00/spectrumerr_{num_str}.npy")
         ys = np.load(f"{Paths.test}/{Folds.pred_folder}/spectrum_{num_str}.npy")
+        if give_norma : ys *= result["fact"]
 
         yp[np.isnan(yp)] = 0.0
         yp_err[np.isnan(yp_err)] = 1.0
@@ -218,8 +219,8 @@ def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savenam
 
         # plot spectre
         ax1.plot(xt, yt, c='k', label='Spectrum to predict')
-        ax1.errorbar(xt, yp, yerr=yp_err, c='r', label='Spectractor', alpha=0.5)
-        ax1.errorbar(xt, ys, yerr=yp_err, c='b', label="Args.model_loss", alpha=0.5)
+        ax1.errorbar(xt, yp, yerr=yp_err, c='r', label=f"Spectractor {np.sum(res_p)/len(res_p):.3f}", alpha=0.5)
+        ax1.errorbar(xt, ys, yerr=yp_err, c='b', label=f"{Args.model_loss } {np.sum(res_s)/len(res_s):.3f}", alpha=0.5)
         ax1.set_ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_str}.npy")
         ax1.legend()
 
@@ -230,7 +231,6 @@ def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savenam
         ax2.errorbar(xt, res_p, yerr=1, color='r')
         ax2.errorbar(xt, res_s, yerr=1, color='b')
         # ax2.set_ylim(-np.max(np.abs(yt-yp)/yp_err), np.max(np.abs(yt-yp)/yp_err))
-        print(res_p)
         ax2.set_ylim(-ylim_p, ylim_p)
         ax2.set_xlabel(r"$\lambda$ (nm)")
         ax2.set_ylabel(f"Residus / err")
