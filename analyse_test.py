@@ -703,4 +703,11 @@ if __name__ == "__main__":
 
             true_res = np.copy(res[mode])[~np.isnan(res[mode])]
 
-            f.write(f"{mode}={np.mean(true_res)}~{np.std(true_res)}\n")
+            pc = 0.05
+            args = np.argsort(true_res)
+            imin, imax = int(len(args)*pc), int(len(args)*(1-pc)) 
+
+            f.write(f"{mode}={np.mean(true_res[imin:imax])}~{np.std(true_res[imin:imax])}\n")
+
+
+
