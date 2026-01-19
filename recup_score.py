@@ -252,7 +252,7 @@ def make_score(score_type, models, tests):
 
                 html_codes = [f"<h1>Score {score}</h1>"]
 
-                for i, typeScore in enumerate(["classic"]):
+                for i, typeScore in enumerate(["classic", "norma"]):
 
                     html_codes.append(f"<h2>{typeScore}</h2>")
                     html_codes.append(generate_html_table(tests+["Total", "Classement (N)", "Classement (%)"], models, x[i], y[i], sorting=sorting, savefig_name=f"{path_resume}/graph/zzz", score=score))
