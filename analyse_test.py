@@ -200,6 +200,7 @@ def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savenam
         yp_err = np.load(f"{Paths.test}/pred_Spectractor_x_x_0e+00/spectrumerr_{num_str}.npy")
         ys = np.load(f"{Paths.test}/{Folds.pred_folder}/spectrum_{num_str}.npy")
 
+        yp[np.isnan(yp)] = 0.0
         yp_err[yp_err < 1] = 1 # avoid 0 ...
 
         res_p = (yt-yp)/yp_err
