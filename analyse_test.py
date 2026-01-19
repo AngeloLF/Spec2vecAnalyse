@@ -219,8 +219,8 @@ def makeOneSpec(true, pred, sim, varp, num_str, Cread, gain, give_norma, savenam
 
         # plot spectre
         ax1.plot(xt, yt, c='k', label='Spectrum to predict')
-        ax1.errorbar(xt, yp, yerr=yp_err, c='r', label=f"Spectractor {np.sum(res_p)/len(res_p):.3f}", alpha=0.5)
-        ax1.errorbar(xt, ys, yerr=yp_err, c='b', label=f"{Args.model_loss } {np.sum(res_s)/len(res_s):.3f}", alpha=0.5)
+        ax1.errorbar(xt, yp, yerr=yp_err, c='r', label=f"Spectractor {np.sum(np.abs(res_p))/len(res_p):.3f}", alpha=0.5)
+        ax1.errorbar(xt, ys, yerr=yp_err, c='b', label=f"{Args.model_loss } {np.sum(np.abs(res_s))/len(res_s):.3f}", alpha=0.5)
         ax1.set_ylabel(f"{Paths.test}/*/{Args.folder_output}_{num_str}.npy")
         ax1.legend()
 
