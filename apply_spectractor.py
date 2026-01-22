@@ -10,6 +10,7 @@ from astropy import units as u
 import traceback, json
 
 
+# IMPORTATION SPECTRACTOR
 spectractor_version = "Spectractor" 
 for argv in sys.argv:
     if "=" in argv and argv.split("=")[0] == "specver":
@@ -20,6 +21,7 @@ from spectractor.extractor.spectrum import Spectrum
 from spectractor import parameters
 from spectractor.simulation.adr import hadec2zdpar
 
+# IMPORTATION SPECSIMULATOR
 sys.path.append(f"./SpecSimulator")
 from specsimulator import SpecSimulator
 import hparams
@@ -128,8 +130,8 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
         header["LINSPOS"] -= 4
     printinfo(f"Distance CCD in hparams : {hp['DISTANCE2CCD']}")
 
-    header["DATE-OBS"] = None
-    header["DATE"] = None
+    header["DATE-OBS"] = "2017-05-31T02:53:52.356"
+    header["DATE"] = "2017-05-31T02:55:54"
     header['RA'] = "12:53:8.10"
     header['DEC'] = "-18:33:27.78"
     header['HA'] = 28.2 # "01:52:42.92"

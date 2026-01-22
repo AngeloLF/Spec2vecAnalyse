@@ -393,6 +393,18 @@ def open_fold(args, paths, folds, nb_level=20):
 
 
 
+    # FIGURE arg002score
+    plt.figure(figsize=(12, 8))
+    for mode, col in [("classic", "g"), ("norma", "r")]:
+        plt.plot(vp["arg.0.0"], res[mode], color=col, label=mode, linestyle="", marker=".", alpha=0.7)
+    plt.xlabel("Flux (en kADU)")
+    plt.ylabel(f"Score")
+    plt.legend()
+    plt.savefig(f"{Paths.save}/arg002score.png")
+    plt.close()
+
+
+
     # FIGURE hist_score
     plt.figure(figsize=(12, 8))
     vmin = min(np.nanmin(res["classic"]), np.nanmin(res["norma"]))
@@ -707,7 +719,7 @@ if __name__ == "__main__":
             args = np.argsort(true_res)
             imin, imax = int(len(args)*pc), int(len(args)*(1-pc))
             print(f"No correction   : {np.mean(true_res)}")
-            print(f"With correction : {np.mean(true_res[imin:imax])}")
+            print(f"With correction : {np.mean(true_res[args[imin:imax]])}")
 
             f.write(f"{mode}={np.mean(true_res[args[imin:imax]])}~{np.std(true_res[args[imin:imax]])}\n")
 
