@@ -19,12 +19,19 @@ import utils_spec.psf_func as pf
 
 
 
+def compute_fact(yt, y):
+
+    fact = np.sum(yt * y) / np.sum(y * y)
+
+    return fact
+
+
 
 def compute_score_L1(true, pred, sim, num_spec_str):
 
     t = np.copy(true)
     p = np.copy(pred)
-    fact_n = np.max(t) / np.max(p)
+    fact_n = compute_fact(t, p) # np.max(t) / np.max(p)
 
     p[p < 0] = 0
     t[t < 0] = 0
@@ -47,7 +54,7 @@ def compute_score_L1(true, pred, sim, num_spec_str):
 
 def compute_score_chi2(true, pred, sim, num_spec_str, Cread, gain, SpectractorProcess=True):
 
-    fact_n = np.max(true) / np.max(pred)
+    fact_n = compute_fact(true, pred) # np.max(true) / np.max(pred)
     pred_n = pred * fact_n
     sigma_READ = Cread / gain
 
