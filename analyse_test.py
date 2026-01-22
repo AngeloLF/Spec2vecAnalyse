@@ -331,7 +331,8 @@ def open_fold(args, paths, folds, nb_level=20):
            "norma"   : np.zeros(hp["nsimu"]) * np.nan,
            "flux"    : np.zeros(hp["nsimu"]),
            "file"    : np.zeros(hp["nsimu"]).astype(str),
-           "num"     : (np.zeros(hp["nsimu"]) * np.nan).astype(str)}
+           "num"     : (np.zeros(hp["nsimu"]) * np.nan).astype(str),
+           "fact"    : np.zeros(hp["nsimu"]) * np.nan}
 
 
 
@@ -377,6 +378,7 @@ def open_fold(args, paths, folds, nb_level=20):
         res["norma"][i] = result['score_norma']
         res["file"][i] = file
         res["num"][i] = num_spec_str
+        res["fact"][i] = result["fact"]
 
 
 
@@ -395,10 +397,9 @@ def open_fold(args, paths, folds, nb_level=20):
 
     # FIGURE arg002score
     plt.figure(figsize=(12, 8))
-    for mode, col in [("classic", "g"), ("norma", "r")]:
-        plt.plot(vp["arg.0.0"], res[mode], color=col, label=mode, linestyle="", marker=".", alpha=0.7)
-    plt.xlabel("Flux (en kADU)")
-    plt.ylabel(f"Score")
+    plt.plot(vp["arg.0.0"], res["fact"], color="g", linestyle="", marker=".", alpha=0.7)
+    plt.xlabel("Arg.0.0")
+    plt.ylabel(f"Norma. factor")
     plt.legend()
     plt.savefig(f"{Paths.save}/arg002score.png")
     plt.close()
