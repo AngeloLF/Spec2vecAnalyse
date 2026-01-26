@@ -274,6 +274,9 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
                     yp = spectrum.data * gain * spectrum.expo
                     yperr = spectrum.err * gain * spectrum.expo
 
+                    print(dir(spectrum))
+                    print(spectrum.header["CHI2_FIT"])
+
                     # on regle de facteur d'echelle
                     fact = np.max(yp)/np.max(yt)
                     yp /= fact
