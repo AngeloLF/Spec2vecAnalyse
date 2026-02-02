@@ -153,7 +153,7 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
 
 
     # create new folders for spectractor, if partition is not given (in this case, folder need to be created before)
-    if partition is None:
+    if partition is None and makeonly is None:
         printinfo(f"No partition, reset folders")
         for fold in ["image_fits", "spectrum_fits", "spectractor_exceptions", pred]:
             if fold in os.listdir(testdir) : shutil.rmtree(f"{testdir}/{fold}")
@@ -280,6 +280,7 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
                     # on regle de facteur d'echelle
                     fact = np.max(yp)/np.max(yt)
                     yp /= fact
+
 
                     # interpolation spectrum
                     finterp = interpolate.interp1d(xp, yp, kind='linear', bounds_error=False, fill_value=0.0)
