@@ -278,9 +278,9 @@ def apply_spectractor(testname, pathtest="./results/output_simu", makeonly=None,
                     print(spectrum.header["CHI2_FIT"])
 
                     # on regle de facteur d'echelle
-                    fact = np.max(yp)/np.max(yt)
+                    fact = np.size(yt) / np.size(yp) # np.max(yp)/np.max(yt)
                     yp /= fact
-
+                    print(f"Len of spectractor data : {np.size(yp)} / fact : {fact}")
 
                     # interpolation spectrum
                     finterp = interpolate.interp1d(xp, yp, kind='linear', bounds_error=False, fill_value=0.0)
